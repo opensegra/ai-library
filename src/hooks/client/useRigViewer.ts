@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { useBrowserQuery } from '@/hooks/client/useBrowserQuery';
@@ -8,6 +9,7 @@ import { useLibrary } from '@/hooks/client/useLibrary';
 import type { PoseFit } from '@/lib/fitting/autofit';
 import { ANGLES } from '@/lib/catalogue/angles';
 import { isPose, type LibraryItem, type Pose } from '@/lib/catalogue/types';
+import { sendPoseRender } from '@/lib/studio/studioStore';
 
 async function fetchFit(code: string): Promise<PoseFit> {
   const response = await fetch(`/api/fits/${encodeURIComponent(code)}`);
@@ -20,6 +22,7 @@ async function fetchFit(code: string): Promise<PoseFit> {
 export function useRigViewer(list: LibraryItem[]) {
   const { state, update, touchRecent } = useLibrary();
   const { write } = useBrowserQuery();
+  const router = useRouter();
   const reopen = useRef<(pose: Pose, angleJp: string) => Promise<void>>(async () => {});
 
   const openRig = useCallback(
@@ -72,10 +75,22 @@ export function useRigViewer(list: LibraryItem[]) {
           update(current => ({ ...current, rigs: { ...current.rigs, [pose.uid]: { figures: structuredClone(figures), savedAt: new Date().toISOString() } } }));
           toast.success(`${pose.code} rig saved.`);
         },
-        onRefit: () => structuredClone(fit.figures)
+        onRefit: () => structuredClone(fit.figures),
+        onStudio: image => {
+          sendPoseRender(pose.uid, angleJp, image);
+          toast.success(`${pose.code} sent to the studio as a 3D render.`, {
+            action: {
+              label: 'Open studio',
+              onClick: () => {
+                RigViewer.close();
+                router.push('/studio');
+              }
+            }
+          });
+        }
       });
     },
-    [list, state.rigs, update, write, touchRecent]
+    [list, state.rigs, update, write, touchRecent, router]
   );
 
   useEffect(() => {

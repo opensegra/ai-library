@@ -21,9 +21,11 @@ export interface RigOpenOptions {
   onStep: ((direction: number, imageJp: string) => void) | null;
   onSave: (figures: FigurePlacement[]) => void;
   onRefit: () => FigurePlacement[] | null;
+  onStudio?: (image: string) => void;
 }
 
 export const RigViewer: {
   open(options: RigOpenOptions): Promise<void>;
+  close(): void;
   fromImage(): void;
 };

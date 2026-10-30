@@ -505,10 +505,18 @@ function overlay(title) {
   return ov;
 }
 function close() { if (cleanup) { const c = cleanup; cleanup = null; c(); } }
+const VARY = { spine: 4, chest: 4, neck: 6, head: 8, shL: 9, shR: 9, wrL: 10, wrR: 10, hipL: 6, hipR: 6, anL: 6, anR: 6 };
+function varyRot(rot) {
+  const out = JSON.parse(JSON.stringify(rot)), jitter = d => (Math.random() * 2 - 1) * d, round = v => Math.round(v * 10) / 10;
+  for (const [n, d] of Object.entries(VARY)) out[n] = (out[n] || [0, 0, 0]).map(v => round(v + jitter(d)));
+  for (const n of ["elL", "elR"]) { const v = out[n] || [0, 0, 0]; out[n] = [round(Math.max(-150, Math.min(0, v[0] + jitter(10)))), v[1], v[2]]; }
+  for (const n of ["knL", "knR"]) { const v = out[n] || [0, 0, 0]; out[n] = [round(Math.max(0, Math.min(150, v[0] + jitter(8)))), v[1], v[2]]; }
+  return out;
+}
 const SIZE_FIELDS = [["height", "Height", 0.8, 1.15], ["head", "Head size", 0.8, 1.25], ["shoulders", "Shoulder width", 0.85, 1.2], ["hips", "Hip width", 0.85, 1.3], ["torso", "Torso length", 0.88, 1.15], ["arms", "Arm length", 0.88, 1.15], ["legs", "Leg length", 0.88, 1.18], ["thickness", "Body thickness", 0.85, 1.25]];
 const POSABLE = ORDER.filter(n => CHILDREN[n] || n === "head");
 function showRig(ov, opts) {
-  const { code, title, imageURL, onSave, onRefit } = opts;
+  const { code, title, imageURL, onSave, onRefit, onStudio } = opts;
   let figures = opts.figures.map(f => ({ at: f.at ? f.at.slice() : [0, 0], rot: JSON.parse(JSON.stringify(f.rot || {})) }));
   ov.querySelector("h3").textContent = title;
   const ref = ov.querySelector(".r3-ref");
@@ -632,13 +640,14 @@ function showRig(ov, opts) {
     if (selected) { const e = new THREE.Euler().setFromQuaternion(figs[selected.fi].bones[selected.n].quaternion, "YZX"); xyz = [e.x, e.y, e.z].map(a => Math.round(a / DEG) + "°").join(" · "); }
     poseEl.innerHTML = `<b>Pose</b><p>Click a blue dot to pick a joint, then drag the rings to turn it. Red, green and blue rings turn around X, Y and Z.</p>
       <div class="r3-sel">${label}${selected ? `<span class="r3-xyz">${xyz}</span>` : ""}</div>
-      <div class="r3-row"><button data-p="zero"${selected ? "" : " disabled"}>Reset joint</button><button data-p="mirror">Mirror pose</button>${onRefit ? '<button data-p="refit">Re-fit from drawing</button>' : ""}<button data-p="rest">Rest pose</button></div>
+      <div class="r3-row"><button data-p="zero"${selected ? "" : " disabled"}>Reset joint</button><button data-p="mirror">Mirror pose</button><button data-p="vary">Vary pose</button>${onRefit ? '<button data-p="refit">Re-fit from drawing</button>' : ""}<button data-p="rest">Rest pose</button></div>
       ${onSave ? '<div class="r3-row"><button data-p="save" class="pri">Save pose to library</button></div>' : ""}`;
   }
   poseEl.onclick = e => {
     const b = e.target.closest("button"); if (!b) return;
     const a = b.dataset.p;
     if (a === "zero" && selected) { figs[selected.fi].bones[selected.n].quaternion.identity(); syncRot(); groundFigures(figs); }
+    if (a === "vary") { figures = figures.map(f => ({ at: f.at, rot: varyRot(f.rot) })); buildAll(); }
     if (a === "mirror") { figures = figures.map(f => ({ at: [-f.at[0], f.at[1], f.at[2] || 0], rot: RIG.mirrorRot(f.rot) })); buildAll(); }
     if (a === "rest") { figures = figures.map(f => ({ at: f.at, rot: {} })); buildAll(); }
     if (a === "refit" && onRefit) { const n = onRefit(); if (n) { figures = n.map(f => ({ at: f.at.slice(), rot: JSON.parse(JSON.stringify(f.rot)) })); buildAll(); } }
@@ -711,8 +720,16 @@ function showRig(ov, opts) {
     requestAnimationFrame(loop);
   };
   loop();
+  const snapshot = () => {
+    const hidden = [grid, tc, ...helpers, ...handles.map(h => h.m)].filter(o => o.visible);
+    hidden.forEach(o => o.visible = false);
+    if (look.edges && meshOn) drawEdges(); else renderer.render(scene, camera);
+    const image = renderer.domElement.toDataURL("image/jpeg", 0.85);
+    hidden.forEach(o => o.visible = true);
+    return image;
+  };
   const tools = ov.querySelector(".r3-tools");
-  tools.innerHTML = `<button data-r3="look" data-look="drawing" aria-pressed="true">Drawing</button><button data-r3="look" data-look="clay" aria-pressed="false">Clay</button><button data-r3="mesh" aria-pressed="true">Mannequin</button><button data-r3="bones" aria-pressed="false">Bones</button><button data-r3="pose" aria-pressed="false">Pose</button><button data-r3="body" aria-pressed="false">Body</button>${images.length ? '<button data-r3="ref" aria-pressed="true">Side by side</button>' : ""}<button data-r3="glb" class="pri">Download .glb</button><button data-r3="bvh">Download .bvh</button>`;
+  tools.innerHTML = `<button data-r3="look" data-look="drawing" aria-pressed="true">Drawing</button><button data-r3="look" data-look="clay" aria-pressed="false">Clay</button><button data-r3="mesh" aria-pressed="true">Mannequin</button><button data-r3="bones" aria-pressed="false">Bones</button><button data-r3="pose" aria-pressed="false">Pose</button><button data-r3="body" aria-pressed="false">Body</button>${images.length ? '<button data-r3="ref" aria-pressed="true">Side by side</button>' : ""}${onStudio ? '<button data-r3="studio">Use in studio</button>' : ""}<button data-r3="glb" class="pri">Download .glb</button><button data-r3="bvh">Download .bvh</button>`;
   const name = (code || "pose").replace(/[^\w.-]+/g, "-");
   tools.onclick = e => {
     const b = e.target.closest("button"); if (!b) return;
@@ -723,6 +740,7 @@ function showRig(ov, opts) {
     if (a === "pose") { posing = toggle(); handles.forEach(h => h.m.visible = posing); if (!posing) select(null); renderPosePanel(); noteEl.textContent = posing ? "Pose mode: click a blue dot, then drag the rings. Orbit still works by dragging empty space." : baseNote; }
     if (a === "ref") { ref.hidden = !toggle(); resize(); }
     if (a === "body") { const on = toggle(); sideEl.hidden = !on; if (on) renderSidePanel(); }
+    if (a === "studio" && onStudio) { onStudio(snapshot()); b.textContent = "Sent to studio"; }
     if (a === "glb") exportGLB(figs, name, buf => download(new Blob([buf], { type: "model/gltf-binary" }), name + ".glb"), scene);
     if (a === "bvh") figs.forEach((f, i) => { const rp = f.bones.root.position.clone().add(f.group.position); download(new Blob([bvhText({ rot: figures[i].rot, rootPosition: rp })], { type: "text/plain" }), name + (figs.length > 1 ? "-" + "AB"[i] : "") + ".bvh"); });
   };
@@ -731,13 +749,14 @@ function showRig(ov, opts) {
 }
 
 export const RigViewer = {
-  async open({ code, title, figures, source, onSave, onRefit, images, imageIndex, onStep, position, framing, proportions }) {
+  close() { close(); },
+  async open({ code, title, figures, source, onSave, onRefit, onStudio, images, imageIndex, onStep, position, framing, proportions }) {
     const ov = overlay(title);
     ov.querySelector(".r3-view").innerHTML = `<div class="r3-status" style="padding-top:120px">Preparing the mannequin…</div>`;
     await ensureBase();
     POSE_SIZING = drawingSizing(proportions);
     buildBase();
-    showRig(ov, { code, title: `${code} · ${title}`, figures, onSave, onRefit, images, imageIndex, onStep, position, framing, note: source === "auto" ? "Rig fitted automatically from the drawing. Use Pose to adjust any joint, Body to resize the mannequin. Drag to orbit." : source === "approx" ? "Approximate fit: this drawing was hard to read automatically, so compare it side by side and correct the joints with Pose, then Save pose to library." : source === "stock" ? "This drawing could not be read automatically, so the mannequin starts in a standard pose. Use Pose to match it to the drawing, then Save pose to library." : null });
+    showRig(ov, { code, title: `${code} · ${title}`, figures, onSave, onRefit, onStudio, images, imageIndex, onStep, position, framing, note: source === "auto" ? "Rig fitted automatically from the drawing. Use Pose to adjust any joint, Body to resize the mannequin. Drag to orbit." : source === "approx" ? "Approximate fit: this drawing was hard to read automatically, so compare it side by side and correct the joints with Pose, then Save pose to library." : source === "stock" ? "This drawing could not be read automatically, so the mannequin starts in a standard pose. Use Pose to match it to the drawing, then Save pose to library." : null });
   },
   fromImage() {
     const ov = overlay("Pose from your image");

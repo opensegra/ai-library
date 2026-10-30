@@ -17,6 +17,7 @@ interface GenerateBody {
   prompt?: string;
   negativePrompt?: string;
   modelPhotos?: string[];
+  scenePhoto?: string | null;
   costumeImage?: string | null;
   poseImages?: string[];
   aspectRatio?: string;
@@ -34,6 +35,18 @@ async function mediaReference(path: string, request: Request): Promise<Reference
   if (!response.ok) throw new ProviderError(`A reference image could not be read (${response.status}).`);
 
   return { mediaType: response.headers.get('content-type')?.split(';')[0] ?? 'image/webp', base64: Buffer.from(await response.arrayBuffer()).toString('base64') };
+}
+
+function isRender(path: unknown): path is string {
+  const match = typeof path === 'string' ? DATA_URL.exec(path) : null;
+
+  return !!match && (match[2].length * 3) / 4 <= MAX_PHOTO_BYTES;
+}
+
+function renderReference(path: string): ReferenceImage {
+  const [, mediaType, base64] = DATA_URL.exec(path) ?? [];
+
+  return { mediaType, base64 };
 }
 
 function isMediaPath(path: unknown): path is string {
@@ -68,7 +81,7 @@ export async function POST(request: Request) {
   if (!RATIOS.has(aspectRatio)) return refuse('That aspect ratio is not supported.');
   if (!body.prompt?.trim() || body.prompt.length > 12000) return refuse('The prompt is empty or too long.');
   if (photos.length > 3 || poses.length < 1 || poses.length > 6) return refuse('Use up to three model photos and one to six poses.');
-  if (!poses.every(isMediaPath) || (body.costumeImage != null && !isMediaPath(body.costumeImage))) return refuse('Poses and costumes must come from this library.');
+  if (!poses.every(path => isMediaPath(path) || isRender(path)) || (body.costumeImage != null && !isMediaPath(body.costumeImage))) return refuse('Poses and costumes must come from this library.');
 
   const photoImages: ReferenceImage[] = [];
 
@@ -79,8 +92,13 @@ export async function POST(request: Request) {
     photoImages.push({ mediaType: match[1], base64: match[2] });
   }
 
+  const scene = body.scenePhoto ? DATA_URL.exec(body.scenePhoto) : null;
+
+  if (body.scenePhoto && (!scene || (scene[2].length * 3) / 4 > MAX_PHOTO_BYTES)) return refuse('The environment photo must be a PNG, JPEG or WebP image under 3 MB.');
+  if (scene) photoImages.push({ mediaType: scene[1], base64: scene[2] });
+
   try {
-    const references = [...photoImages, ...(body.costumeImage ? [await mediaReference(body.costumeImage, request)] : []), ...(await Promise.all(poses.map(path => mediaReference(path, request))))];
+    const references = [...photoImages, ...(body.costumeImage ? [await mediaReference(body.costumeImage, request)] : []), ...(await Promise.all(poses.map(path => (isRender(path) ? renderReference(path) : mediaReference(path, request)))))];
     const image = await generateImage({ protocol, apiKey, baseURL, model, prompt: body.prompt, negativePrompt: typeof body.negativePrompt === 'string' ? body.negativePrompt.trim().slice(0, 2000) || undefined : undefined, images: references, aspectRatio, signal: request.signal });
 
     return Response.json(image);

@@ -64,7 +64,11 @@ NEXT_PUBLIC_MEDIA_BASE_URL=https://your-bucket.example.com pnpm build
 1. Open any pose and choose **3D rig & export**.
 2. Compare the mannequin with the drawing using **Side by side** and the angle tabs.
 3. Optionally adjust joints with **Pose** and the body shape with **Body**, then **Save pose to library**.
+   **Mirror pose** flips it left to right and **Vary pose** nudges every joint a little for a fresh
+   variation.
 4. Choose **Download .glb** for a rigged, posed mesh, or **Download .bvh** for the skeleton alone.
+5. Choose **Use in studio** to send the mannequin, exactly as framed, to the studio as the pose
+   reference in place of the drawing.
 
 The model uses a 17-bone skeleton (pelvis, spine, chest, neck, head, upper arms, forearms, hands,
 thighs, shins and feet), which imports into Blender and any tool that reads glTF or BVH.
@@ -84,7 +88,10 @@ read in the browser and never uploaded.
 
 The studio puts your own model into any pose and costume with an image-generation model.
 
-1. Add up to three photos of the person to draw, and optionally describe them.
+![The studio: a pose and a costume sent as references, and the generated photograph](docs/screenshots/studio.jpg)
+
+1. Add up to three photos of the person to draw, and optionally describe them. Optionally add an
+   environment photo, whose background, light and camera style the result follows.
 2. Choose up to six poses and, optionally, one costume. Any pose or costume can also be sent here
    with **Add to studio** from its detail panel.
 3. Under **Image settings**, add one or more services. **Puter** needs no key: you sign in with
@@ -94,6 +101,10 @@ The studio puts your own model into any pose and costume with an image-generatio
    by its base URL and model. Keys are kept in your browser and sent only with each generate request.
 4. Tick the services to generate with, describe the scene and send. Each pose becomes its own
    image, or all of them share one sheet, and every selected service makes its own version.
+
+The default prompt asks for a photorealistic fashion editorial. It names the role of each reference
+image in order (model photos, environment, outfit, pose), keeps the outfit and the pose exactly, and
+adds what you type as the scene and direction.
 
 A default negative prompt (malformed hands and limbs, extra fingers, watermarks, text and so on) is
 sent with every image; change it under the options menu with **Negative prompt**. Services that take

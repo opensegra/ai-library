@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlusIcon, PersonStandingIcon, SettingsIcon, ShirtIcon, SquarePenIcon } from 'lucide-react';
+import { ImagePlusIcon, MountainIcon, PersonStandingIcon, SettingsIcon, ShirtIcon, SquarePenIcon } from 'lucide-react';
 
 import { ChatTurn } from '@/app/(library)/studio/components/ChatTurn';
 import { Composer } from '@/app/(library)/studio/components/Composer';
@@ -10,6 +10,7 @@ import { NegativePromptDialog } from '@/app/(library)/studio/components/Negative
 import { PickerDialog } from '@/app/(library)/studio/components/PickerDialog';
 import { useChatThread } from '@/app/(library)/studio/components/useChatThread';
 import { useModelPanel } from '@/app/(library)/studio/components/useModelPanel';
+import { useScenePhoto } from '@/app/(library)/studio/components/useScenePhoto';
 import { useStudioScreen } from '@/app/(library)/studio/components/useStudioScreen';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -21,16 +22,18 @@ export function StudioScreen() {
   const end = useChatThread(studio.turns.length);
   const { selection, turns } = studio;
   const { input, addPhotos } = useModelPanel(selection.modelPhotos, modelPhotos => studio.patch({ modelPhotos }));
+  const { input: sceneInput, choose: chooseScene } = useScenePhoto(scenePhoto => studio.patch({ scenePhoto }));
   const serviceLabel = studio.services.length === 1 ? serviceName(studio.services[0]) : studio.services.length ? `${studio.services.length} services` : 'Choose a service';
   const footnote = studio.services.length
     ? `${studio.imageCount} ${studio.imageCount === 1 ? 'image' : 'images'} per send with ${studio.services.map(service => service.preset === 'custom' ? serviceName(service) : `${serviceName(service)} (${service.model})`).join(', ')}.`
     : 'No image service set up in this browser. Sending uses the server key if one is set; Copy prompt works with any image tool.';
   const starters = [
     { kind: 'photos', label: 'Add model photos', detail: 'Up to three of the person to draw', icon: ImagePlusIcon },
+    { kind: 'scene', label: 'Add an environment', detail: 'A photo for the place, light and camera', icon: MountainIcon },
     { kind: 'poses', label: 'Choose poses', detail: 'Up to six, each from five angles', icon: PersonStandingIcon },
     { kind: 'costumes', label: 'Pick a costume', detail: 'Optional; otherwise their own clothes', icon: ShirtIcon }
   ] as const;
-  const start = (kind: (typeof starters)[number]['kind']) => (kind === 'photos' ? input.current?.click() : studio.setPicker(kind));
+  const start = (kind: (typeof starters)[number]['kind']) => (kind === 'photos' ? input.current?.click() : kind === 'scene' ? sceneInput.current?.click() : studio.setPicker(kind));
   const composer = (
     <Composer
       selection={selection}
@@ -41,6 +44,7 @@ export function StudioScreen() {
       running={studio.running}
       onChange={studio.patch}
       onAddPhotos={() => start('photos')}
+      onAddScene={() => start('scene')}
       onOpenModel={() => studio.setModelOpen(true)}
       onPickPoses={() => studio.setPicker('poses')}
       onPickCostume={() => studio.setPicker('costumes')}
@@ -94,7 +98,7 @@ export function StudioScreen() {
               <p className="text-sm text-muted-foreground">Put your model into any pose and costume with an image model.</p>
             </div>
             {composer}
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2">
               {starters.map(starter => (
                 <button key={starter.label} type="button" onClick={() => start(starter.kind)} className="flex items-start gap-3 rounded-2xl border p-3 text-left hover:bg-accent">
                   <starter.icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -117,6 +121,7 @@ export function StudioScreen() {
         hidden
         onChange={event => void addPhotos(event.target.files)}
       />
+      <input ref={sceneInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={event => void chooseScene(event.target.files)} />
       <PickerDialog
         kind={studio.picker}
         onOpenChange={open => !open && studio.setPicker(null)}

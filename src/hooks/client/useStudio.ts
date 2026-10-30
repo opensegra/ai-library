@@ -14,7 +14,7 @@ export function useStudio() {
     []
   );
   const removePose = useCallback((uid: string) => changeSelection(current => ({ ...current, poses: current.poses.filter(pose => pose.uid !== uid) })), []);
-  const setPoseAngle = useCallback((uid: string, angle: string) => changeSelection(current => ({ ...current, poses: current.poses.map(pose => (pose.uid === uid ? { ...pose, angle } : pose)) })), []);
+  const setPoseAngle = useCallback((uid: string, angle: string) => changeSelection(current => ({ ...current, poses: current.poses.map(pose => (pose.uid === uid ? { uid, angle } : pose)) })), []);
   const setCostume = useCallback((uid: string | null) => changeSelection(current => ({ ...current, costume: uid })), []);
   const patch = useCallback((change: Partial<StudioSelection>) => changeSelection(current => ({ ...current, ...change })), []);
 

@@ -28,6 +28,7 @@ export interface StudioResult {
 export interface ChosenPose {
   pose: Pose;
   angle: string;
+  image: string | undefined;
 }
 
 export interface TurnAttachment {
@@ -66,7 +67,7 @@ export function useStudioScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [negativeOpen, setNegativeOpen] = useState(false);
   const controllers = useRef(new Set<AbortController>());
-  const poses = useMemo(() => selection.poses.map((entry: StudioPose) => ({ pose: itemByUid.get(entry.uid), angle: entry.angle })).filter((entry): entry is ChosenPose => !!entry.pose && isPose(entry.pose)), [selection.poses, itemByUid]);
+  const poses = useMemo(() => selection.poses.map((entry: StudioPose) => ({ pose: itemByUid.get(entry.uid), angle: entry.angle, image: entry.image })).filter((entry): entry is ChosenPose => !!entry.pose && isPose(entry.pose)), [selection.poses, itemByUid]);
   const costumeItem = selection.costume ? itemByUid.get(selection.costume) : undefined;
   const costume = costumeItem && !isPose(costumeItem) ? (costumeItem as Costume) : null;
   const services = useMemo(() => settings.services.filter(service => settings.selected.includes(service.id) && isServiceReady(service)), [settings]);
@@ -76,11 +77,12 @@ export function useStudioScreen() {
   const buildJobs = (message: string) =>
     groups.map(group => ({
       label: group.map(entry => entry.pose.code).join(' + '),
-      poseImages: group.map(entry => (entry.pose.images[entry.angle] ?? Object.values(entry.pose.images)[0]).full),
+      poseImages: group.map(entry => entry.image ?? (entry.pose.images[entry.angle] ?? Object.values(entry.pose.images)[0]).full),
       prompt: composePrompt({
-        poses: group.map(entry => ({ code: entry.pose.code, name: entry.pose.name, group: entry.pose.lineName, angle: angleName(entry.angle), people: isDuo(entry.pose) ? 2 : 1, arrangement: duoArrangement(entry.pose) })),
+        poses: group.map(entry => ({ code: entry.pose.code, name: entry.pose.name, group: entry.pose.lineName, angle: entry.image ? 'Rendered' : angleName(entry.angle), people: isDuo(entry.pose) ? 2 : 1, arrangement: duoArrangement(entry.pose) })),
         costume: costume ? { id: costume.id, words: costume.words } : null,
         modelPhotoCount: selection.modelPhotos.length,
+        hasScene: !!selection.scenePhoto,
         description: selection.description,
         extraPrompt: message,
         mode: selection.mode
@@ -132,6 +134,7 @@ export function useStudioScreen() {
           prompt,
           negativePrompt: negativeField ? selection.negativePrompt.trim() || undefined : undefined,
           modelPhotos: selection.modelPhotos,
+          scenePhoto: selection.scenePhoto,
           costumeImage: costume?.mid ?? null,
           poseImages: job.poseImages,
           aspectRatio: selection.aspectRatio
@@ -141,9 +144,9 @@ export function useStudioScreen() {
     const turn: StudioTurn = {
       id: `${stamp}`,
       message,
-      photos: selection.modelPhotos,
+      photos: [...selection.modelPhotos, ...(selection.scenePhoto ? [selection.scenePhoto] : [])],
       attachments: [
-        ...poses.map(({ pose, angle }) => ({ key: pose.uid, thumb: (pose.images[angle] ?? Object.values(pose.images)[0]).thumb, label: `${pose.code} · ${angleName(angle)}` })),
+        ...poses.map(({ pose, angle, image }) => ({ key: pose.uid, thumb: image ?? (pose.images[angle] ?? Object.values(pose.images)[0]).thumb, label: `${pose.code} · ${image ? '3D' : angleName(angle)}` })),
         ...(costume ? [{ key: costume.uid, thumb: costume.thumb, label: costume.id }] : [])
       ],
       details: [selection.aspectRatio, poses.length > 1 ? (selection.mode === 'sheet' ? 'one sheet' : 'one image each') : null].filter(Boolean).join(' · '),

@@ -4,6 +4,7 @@ import { CopyIcon, DownloadIcon, Loader2Icon, RotateCcwIcon } from 'lucide-react
 
 import type { StudioResult } from '@/app/(library)/studio/components/useStudioScreen';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface StudioResultsProps {
   results: StudioResult[];
@@ -13,7 +14,7 @@ interface StudioResultsProps {
 
 export function StudioResults({ results, onCopy, onRetry }: StudioResultsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className={cn('grid gap-3', results.length === 1 ? 'max-w-2xl grid-cols-1' : 'grid-cols-1 sm:grid-cols-2')}>
       {results.map(result => (
         <figure key={result.id} className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-2">
           {result.state === 'done' && result.image ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpIcon, BanIcon, CopyIcon, ImagePlusIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SlidersHorizontalIcon, SquareIcon, UserRoundIcon, XIcon } from 'lucide-react';
+import { ArrowUpIcon, BanIcon, CopyIcon, ImagePlusIcon, MountainIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SlidersHorizontalIcon, SquareIcon, UserRoundIcon, XIcon } from 'lucide-react';
 
 import type { ChosenPose } from '@/app/(library)/studio/components/useStudioScreen';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ interface ComposerProps {
   running: boolean;
   onChange: (change: Partial<StudioSelection>) => void;
   onAddPhotos: () => void;
+  onAddScene: () => void;
   onOpenModel: () => void;
   onPickPoses: () => void;
   onPickCostume: () => void;
@@ -48,7 +49,7 @@ interface ComposerProps {
 export function Composer(props: ComposerProps) {
   const { selection, poses, costume, running, onChange } = props;
   const photos = selection.modelPhotos;
-  const hasAttachments = photos.length > 0 || poses.length > 0 || !!costume;
+  const hasAttachments = photos.length > 0 || !!selection.scenePhoto || poses.length > 0 || !!costume;
 
   return (
     <div className="flex flex-col gap-2 rounded-3xl border bg-background p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
@@ -62,17 +63,27 @@ export function Composer(props: ComposerProps) {
               <RemoveButton label="Remove photo" onClick={() => onChange({ modelPhotos: photos.filter((_, other) => other !== index) })} />
             </div>
           ))}
-          {poses.map(({ pose, angle }) => (
+          {selection.scenePhoto ? (
+            <div className="relative shrink-0">
+              <button type="button" onClick={props.onAddScene} aria-label="Change environment photo">
+                <img src={selection.scenePhoto} alt="" className="h-20 w-15 rounded-xl border object-cover" />
+                <span className="absolute inset-x-1 bottom-1 truncate rounded bg-black/60 px-1 text-[9px] text-white">Scene</span>
+              </button>
+              <RemoveButton label="Remove environment photo" onClick={() => onChange({ scenePhoto: null })} />
+            </div>
+          ) : null}
+          {poses.map(({ pose, angle, image }) => (
             <div key={pose.uid} className="relative shrink-0">
               <Popover>
                 <PopoverTrigger render={<button type="button" aria-label={`${pose.code} view angle`} />}>
-                  <img src={(pose.images[angle] ?? Object.values(pose.images)[0]).thumb} alt="" className="h-20 w-15 rounded-xl border bg-white object-contain" />
-                  <span className="absolute inset-x-1 bottom-1 truncate rounded bg-black/60 px-1 text-[9px] text-white">{ANGLES.find(entry => entry.jp === angle)?.en}</span>
+                  <img src={image ?? (pose.images[angle] ?? Object.values(pose.images)[0]).thumb} alt="" className="h-20 w-15 rounded-xl border bg-white object-contain" />
+                  <span className="absolute inset-x-1 bottom-1 truncate rounded bg-black/60 px-1 text-[9px] text-white">{image ? '3D' : ANGLES.find(entry => entry.jp === angle)?.en}</span>
                 </PopoverTrigger>
                 <PopoverContent side="top" align="start" className="w-64">
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">{pose.code}</p>
                     <p className="line-clamp-2 text-sm">{pose.name}</p>
+                    {image ? <p className="mt-1 text-xs text-muted-foreground">Rendered from the 3D rig. Pick an angle to use the drawing instead.</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {ANGLES.filter(entry => pose.images[entry.jp]).map(entry => (
@@ -80,7 +91,7 @@ export function Composer(props: ComposerProps) {
                         key={entry.jp}
                         type="button"
                         onClick={() => props.onPoseAngle(pose.uid, entry.jp)}
-                        className={cn('rounded-md border px-2 py-0.5 text-xs', entry.jp === angle ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent')}
+                        className={cn('rounded-md border px-2 py-0.5 text-xs', !image && entry.jp === angle ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent')}
                       >
                         {entry.en}
                       </button>
@@ -124,6 +135,10 @@ export function Composer(props: ComposerProps) {
             <DropdownMenuItem onClick={props.onAddPhotos} disabled={photos.length >= 3}>
               <ImagePlusIcon />
               Add model photo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={props.onAddScene}>
+              <MountainIcon />
+              {selection.scenePhoto ? 'Change environment photo' : 'Add environment photo'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={props.onPickPoses} disabled={poses.length >= 6}>
               <PersonStandingIcon />

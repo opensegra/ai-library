@@ -24,12 +24,14 @@ export interface StudioSettings {
 export interface StudioPose {
   uid: string;
   angle: string;
+  image?: string;
 }
 
 export interface StudioSelection {
   poses: StudioPose[];
   costume: string | null;
   modelPhotos: string[];
+  scenePhoto: string | null;
   description: string;
   extraPrompt: string;
   negativePrompt: string;
@@ -59,6 +61,7 @@ export interface GenerateRequest {
   prompt: string;
   negativePrompt?: string;
   modelPhotos: string[];
+  scenePhoto?: string | null;
   costumeImage: string | null;
   poseImages: string[];
   aspectRatio: AspectRatio;

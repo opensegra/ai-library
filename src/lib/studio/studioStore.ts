@@ -5,7 +5,7 @@ import type { ImageService, ServicePresetId, StudioSelection, StudioSettings } f
 const SELECTION_KEY = 'ai-library.studio';
 const SETTINGS_KEY = 'ai-library.image-settings';
 
-export const EMPTY_SELECTION: StudioSelection = { poses: [], costume: null, modelPhotos: [], description: '', extraPrompt: '', negativePrompt: DEFAULT_NEGATIVE_PROMPT, aspectRatio: '3:4', mode: 'each' };
+export const EMPTY_SELECTION: StudioSelection = { poses: [], costume: null, modelPhotos: [], scenePhoto: null, description: '', extraPrompt: '', negativePrompt: DEFAULT_NEGATIVE_PROMPT, aspectRatio: '3:4', mode: 'each' };
 export const DEFAULT_SETTINGS: StudioSettings = { services: [], selected: [] };
 
 export function newService(preset: ServicePresetId): ImageService {
@@ -57,7 +57,7 @@ export function subscribeStudio(listener: () => void): () => void {
 }
 
 export function selectionSnapshot(): StudioSelection {
-  selection ??= { ...read(SELECTION_KEY, EMPTY_SELECTION), modelPhotos: [] };
+  selection ??= { ...read(SELECTION_KEY, EMPTY_SELECTION), modelPhotos: [], scenePhoto: null };
 
   return selection;
 }
@@ -71,7 +71,7 @@ export function settingsSnapshot(): StudioSettings {
 export function changeSelection(change: (current: StudioSelection) => StudioSelection) {
   selection = change(selectionSnapshot());
 
-  write(SELECTION_KEY, { ...selection, modelPhotos: [] });
+  write(SELECTION_KEY, { ...selection, modelPhotos: [], scenePhoto: null });
   notify();
 }
 
@@ -88,4 +88,11 @@ export function clearSettings() {
     window.localStorage.removeItem(SETTINGS_KEY);
   } catch {}
   notify();
+}
+
+export function sendPoseRender(uid: string, angle: string, image: string) {
+  changeSelection(current => ({
+    ...current,
+    poses: current.poses.some(pose => pose.uid === uid) ? current.poses.map(pose => (pose.uid === uid ? { uid, angle, image } : pose)) : [...current.poses, { uid, angle, image }].slice(-6)
+  }));
 }

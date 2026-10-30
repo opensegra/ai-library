@@ -21,6 +21,7 @@ export interface PuterImageCall {
   model: string;
   prompt: string;
   modelPhotos: string[];
+  scenePhoto?: string | null;
   costumeImage: string | null;
   poseImages: string[];
   aspectRatio: AspectRatio;
@@ -116,7 +117,7 @@ export async function generateWithPuter(call: PuterImageCall): Promise<Generated
 
   try {
     const puter = await loadPuter();
-    const references = [...call.modelPhotos, ...(await Promise.all(media.map(path => reference(path, call.signal))))];
+    const references = [...call.modelPhotos, ...(call.scenePhoto ? [call.scenePhoto] : []), ...(await Promise.all(media.map(path => reference(path, call.signal))))];
     const image = await Promise.race([puter.ai.txt2img(call.prompt, { model: call.model, input_images: references, ratio: { w: width, h: height } }), untilAborted(call.signal)]);
 
     return { dataUrl: await asDataUrl(image.src), model: call.model, referencesSent: references.length > 0 };
