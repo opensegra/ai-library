@@ -9,6 +9,26 @@ A browsable library of pose and costume references, with a rigged 3D mannequin f
 
 Built with Next.js 16, React 19, Tailwind CSS 4, shadcn/ui and three.js.
 
+![The pose library with a pose open in the detail panel](docs/screenshots/poses.jpg)
+
+![A pose on the rigged 3D mannequin, side by side with its drawing](docs/screenshots/rig-viewer.jpg)
+
+![The costume library filtered to winter, with a costume open](docs/screenshots/costumes.jpg)
+
+## Sample references
+
+Every pose is drawn from five angles. P-GL-001, *S-curve stand, hip pushed to the side*:
+
+| Front | Above | Below | Side | Diagonal |
+| :---: | :---: | :---: | :---: | :---: |
+| <img src="public/media/poses/thumbs/full_sexy_P001_front.jpg" width="140" alt="P-GL-001 from the front"> | <img src="public/media/poses/thumbs/full_sexy_P001_high.jpg" width="140" alt="P-GL-001 from above"> | <img src="public/media/poses/thumbs/full_sexy_P001_low.jpg" width="140" alt="P-GL-001 from below"> | <img src="public/media/poses/thumbs/full_sexy_P001_side.jpg" width="140" alt="P-GL-001 from the side"> | <img src="public/media/poses/thumbs/full_sexy_P001_diag.jpg" width="140" alt="P-GL-001 from the diagonal"> |
+
+One costume from each season:
+
+| Spring · C-SP-0001 | Summer · C-SU-0001 | Autumn · C-AU-0001 | Winter · C-WI-0004 |
+| :---: | :---: | :---: | :---: |
+| <img src="public/media/costumes/thumbs/SPR-0001.webp" width="150" alt="Spring costume C-SP-0001"> | <img src="public/media/costumes/thumbs/SUM-0162.webp" width="150" alt="Summer costume C-SU-0001"> | <img src="public/media/costumes/thumbs/AUT-0001.webp" width="150" alt="Autumn costume C-AU-0001"> | <img src="public/media/costumes/thumbs/WIN-0004.webp" width="150" alt="Winter costume C-WI-0004"> |
+
 ## Getting started
 
 ```bash
@@ -73,6 +93,7 @@ read in the browser and never uploaded.
 
 ```
 data/                      pose and costume catalogue, and the joint data the rigs are fitted from
+docs/screenshots/          the screenshots in this README
 public/media/              pose and costume images
 public/assets/             the base mannequin body (glTF)
 src/app/(library)/         poses, costumes, collections, boards and pose-from-image screens
