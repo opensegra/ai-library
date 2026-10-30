@@ -1,11 +1,32 @@
-import { DEFAULT_BASE_URLS, DEFAULT_MODELS } from '@/lib/studio/providerDefaults';
-import type { StudioSelection, StudioSettings } from '@/lib/studio/types';
+import { DEFAULT_NEGATIVE_PROMPT } from '@/lib/catalogue/negativePrompt';
+import { presetFor } from '@/lib/studio/servicePresets';
+import type { ImageService, ServicePresetId, StudioSelection, StudioSettings } from '@/lib/studio/types';
 
 const SELECTION_KEY = 'ai-library.studio';
 const SETTINGS_KEY = 'ai-library.image-settings';
 
-export const EMPTY_SELECTION: StudioSelection = { poses: [], costume: null, modelPhotos: [], description: '', extraPrompt: '', aspectRatio: '3:4', mode: 'each' };
-export const DEFAULT_SETTINGS: StudioSettings = { provider: 'gemini', apiKey: '', baseURL: DEFAULT_BASE_URLS.gemini, model: DEFAULT_MODELS.gemini };
+export const EMPTY_SELECTION: StudioSelection = { poses: [], costume: null, modelPhotos: [], description: '', extraPrompt: '', negativePrompt: DEFAULT_NEGATIVE_PROMPT, aspectRatio: '3:4', mode: 'each' };
+export const DEFAULT_SETTINGS: StudioSettings = { services: [], selected: [] };
+
+export function newService(preset: ServicePresetId): ImageService {
+  const defaults = presetFor(preset);
+
+  return { id: `${preset}-${Math.random().toString(36).slice(2, 8)}`, preset, apiKey: '', baseURL: defaults.baseURL, model: defaults.model };
+}
+
+function readSettings(): StudioSettings {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(SETTINGS_KEY) ?? 'null') as Partial<StudioSettings> | null;
+
+    if (!stored || !Array.isArray(stored.services)) return DEFAULT_SETTINGS;
+
+    const services = stored.services.filter(service => service && typeof service.id === 'string');
+
+    return { services, selected: (stored.selected ?? []).filter(id => services.some(service => service.id === id)) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
 
 let selection: StudioSelection | null = null;
 let settings: StudioSettings | null = null;
@@ -42,7 +63,7 @@ export function selectionSnapshot(): StudioSelection {
 }
 
 export function settingsSnapshot(): StudioSettings {
-  settings ??= read(SETTINGS_KEY, DEFAULT_SETTINGS);
+  settings ??= readSettings();
 
   return settings;
 }

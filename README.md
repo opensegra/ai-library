@@ -87,22 +87,30 @@ The studio puts your own model into any pose and costume with an image-generatio
 1. Add up to three photos of the person to draw, and optionally describe them.
 2. Choose up to six poses and, optionally, one costume. Any pose or costume can also be sent here
    with **Add to studio** from its detail panel.
-3. Under **Image settings**, pick Google Gemini, an OpenAI-compatible service or Seedream, and paste
-   your API key. The key is kept in your browser and sent only with each generate request.
-4. Choose **Generate**. Each pose becomes its own image, or all of them share one sheet.
+3. Under **Image settings**, add one or more services. **Puter** needs no key: you sign in with
+   your own Puter account, which pays for what you generate, and the image is made in your browser.
+   The other presets take an API key: Google Gemini, OpenAI, OpenRouter, xAI, Together,
+   SiliconFlow, Zhipu, Seedream and BytePlus, and any other OpenAI-compatible service can be added
+   by its base URL and model. Keys are kept in your browser and sent only with each generate request.
+4. Tick the services to generate with, describe the scene and send. Each pose becomes its own
+   image, or all of them share one sheet, and every selected service makes its own version.
+
+A default negative prompt (malformed hands and limbs, extra fingers, watermarks, text and so on) is
+sent with every image; change it under the options menu with **Negative prompt**. Services that take
+a separate negative prompt get it as one, and the others read it as an "Avoid" line.
 
 Without a key, **Copy prompt** gives you the full prompt to use in any other image tool, with the
 model photos, the costume image and the pose drawing as references in that order.
 
-To use a key held on the server instead, set `IMAGE_API_KEY` (and optionally `IMAGE_PROVIDER`,
-`IMAGE_BASE_URL`) in the environment.
+To use a key held on the server instead, set `IMAGE_API_KEY` in the environment, and optionally
+`IMAGE_PROTOCOL` (`gemini`, `openai`, `seedream` or `chat`), `IMAGE_BASE_URL` and `IMAGE_MODEL`.
 
 ## API
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /api/poses?q=&group=&limit=` | poses with their five images and a link to their rig |
-| `GET /api/costumes?q=&category=&colour=&limit=` | costumes with their keywords and images |
+| `GET /api/poses?q=&group=&limit=` | poses with their five images, a ready-to-use prompt and a link to their rig |
+| `GET /api/costumes?q=&category=&colour=&limit=` | costumes with their keywords, a ready-to-use prompt and images |
 | `GET /api/fits/:code` | the fitted rig for one pose |
 | `POST /api/generate` | one generated image, used by the studio |
 
@@ -111,6 +119,9 @@ The search endpoints leave out the adult categories unless `include_adult=true` 
 ## Features
 
 - Filter poses by group and class, and costumes by category, colour and keyword.
+- A written description of every pose and costume, ready to copy as a prompt, plus a default
+  negative prompt. Duo poses say how the woman and man are placed. Full-body poses also
+  describe where each hand and leg is, read from the drawing; the camera line follows the chosen angle.
 - Search, sort and shuffle; every view is a shareable URL.
 - Favourites, recently viewed, saved rigs and boards for collecting one character's references.
 - Compare up to four items, full-screen zoom, and image adjustments (mirror, invert, contrast, tint).

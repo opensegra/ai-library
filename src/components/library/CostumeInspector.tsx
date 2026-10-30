@@ -4,9 +4,12 @@ import { DownloadIcon, Maximize2Icon, SparklesIcon, StarIcon } from 'lucide-reac
 import Link from 'next/link';
 
 import { BoardMenu } from '@/components/library/BoardMenu';
+import { PromptBlock } from '@/components/library/PromptBlock';
 import { useCostumeInspector } from '@/components/library/useCostumeInspector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { costumePrompt } from '@/lib/catalogue/describeCostume';
+import { DEFAULT_NEGATIVE_PROMPT } from '@/lib/catalogue/negativePrompt';
 import type { Costume, LibraryItem } from '@/lib/catalogue/types';
 
 interface CostumeInspectorProps {
@@ -35,6 +38,8 @@ export function CostumeInspector({ costume, onZoom, onSelect }: CostumeInspector
           ))}
         </div>
       </div>
+      <PromptBlock title="Description" text={costumePrompt(costume)} />
+      <PromptBlock title="Negative prompt" text={DEFAULT_NEGATIVE_PROMPT} compact />
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={toggleFavourite}>
           <StarIcon className={favourite ? 'fill-amber-400 text-amber-400' : ''} />

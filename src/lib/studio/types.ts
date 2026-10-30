@@ -1,14 +1,24 @@
-export type ImageProvider = 'gemini' | 'openai' | 'seedream';
+export type ImageProtocol = 'gemini' | 'openai' | 'seedream' | 'chat' | 'puter';
+
+export type ServerProtocol = Exclude<ImageProtocol, 'puter'>;
+
+export type ServicePresetId = 'puter' | 'gemini' | 'openai' | 'openrouter' | 'xai' | 'together' | 'siliconflow' | 'zhipu' | 'seedream' | 'byteplus' | 'custom';
 
 export type AspectRatio = '3:4' | '1:1' | '4:3' | '9:16' | '16:9';
 
 export type LayoutMode = 'each' | 'sheet';
 
-export interface StudioSettings {
-  provider: ImageProvider;
+export interface ImageService {
+  id: string;
+  preset: ServicePresetId;
   apiKey: string;
   baseURL: string;
   model: string;
+}
+
+export interface StudioSettings {
+  services: ImageService[];
+  selected: string[];
 }
 
 export interface StudioPose {
@@ -22,6 +32,7 @@ export interface StudioSelection {
   modelPhotos: string[];
   description: string;
   extraPrompt: string;
+  negativePrompt: string;
   aspectRatio: AspectRatio;
   mode: LayoutMode;
 }
@@ -32,6 +43,7 @@ export interface PromptPose {
   group: string;
   angle: string;
   people: number;
+  arrangement: string | null;
 }
 
 export interface PromptCostume {
@@ -40,8 +52,12 @@ export interface PromptCostume {
 }
 
 export interface GenerateRequest {
-  settings: StudioSettings;
+  protocol: ImageProtocol;
+  apiKey: string;
+  baseURL: string;
+  model: string;
   prompt: string;
+  negativePrompt?: string;
   modelPhotos: string[];
   costumeImage: string | null;
   poseImages: string[];

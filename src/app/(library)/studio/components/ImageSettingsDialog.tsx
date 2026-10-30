@@ -1,13 +1,18 @@
 'use client';
 
+import { ExternalLinkIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+
+import { PuterAccount } from '@/app/(library)/studio/components/PuterAccount';
 import { useImageSettingsDialog } from '@/app/(library)/studio/components/useImageSettingsDialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PROVIDER_LABELS } from '@/lib/studio/providerDefaults';
-import type { ImageProvider, StudioSettings } from '@/lib/studio/types';
+import { needsKey, presetFor, SERVICE_PRESETS } from '@/lib/studio/servicePresets';
+import type { ServicePresetId, StudioSettings } from '@/lib/studio/types';
 
 interface ImageSettingsDialogProps {
   open: boolean;
@@ -18,43 +23,87 @@ interface ImageSettingsDialogProps {
 }
 
 export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onClear }: ImageSettingsDialogProps) {
-  const { draft, setDraft, chooseProvider } = useImageSettingsDialog(open, settings);
+  const { draft, add, remove, update, choosePreset, toggle, finished } = useImageSettingsDialog(open, settings);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Image settings</DialogTitle>
-          <DialogDescription>Your key is kept in this browser only and is sent with each generate request, never stored on the server.</DialogDescription>
+          <DialogDescription>
+            Add one or more image services. Ticked services are all used, so each pose is generated once per service. Keys stay in this browser and are only sent with a generate request. Puter needs no key: you sign in with your own Puter
+            account instead.
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid gap-1.5">
-            <Label>Service</Label>
-            <Select value={draft.provider} onValueChange={value => chooseProvider(value as ImageProvider)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>{PROVIDER_LABELS[draft.provider]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(PROVIDER_LABELS) as ImageProvider[]).map(provider => (
-                  <SelectItem key={provider} value={provider}>
-                    {PROVIDER_LABELS[provider]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="api-key">API key</Label>
-            <Input id="api-key" type="password" autoComplete="off" value={draft.apiKey} onChange={event => setDraft({ ...draft, apiKey: event.target.value })} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="model">Model</Label>
-            <Input id="model" value={draft.model} onChange={event => setDraft({ ...draft, model: event.target.value })} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="base-url">Base URL</Label>
-            <Input id="base-url" value={draft.baseURL} onChange={event => setDraft({ ...draft, baseURL: event.target.value })} />
-          </div>
+        <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1">
+          {draft.services.map(service => {
+            const preset = presetFor(service.preset);
+            const keyed = needsKey(service.preset);
+
+            return (
+              <div key={service.id} className="grid gap-2.5 rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={draft.selected.includes(service.id)} onCheckedChange={() => toggle(service.id)} aria-label={`Use ${preset.label}`} />
+                  <Select value={service.preset} onValueChange={value => choosePreset(service.id, value as ServicePresetId)}>
+                    <SelectTrigger size="sm" className="min-w-0 flex-1">
+                      <SelectValue>{preset.label}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_PRESETS.map(option => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="icon-sm" aria-label={`Remove ${preset.label}`} onClick={() => remove(service.id)}>
+                    <Trash2Icon />
+                  </Button>
+                </div>
+                {keyed ? (
+                  <div className="grid gap-1">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${service.id}-key`}>API key</Label>
+                      {preset.keyPage ? (
+                        <a href={preset.keyPage} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                          Get a key
+                          <ExternalLinkIcon className="size-3" />
+                        </a>
+                      ) : null}
+                    </div>
+                    <Input id={`${service.id}-key`} type="password" autoComplete="off" value={service.apiKey} onChange={event => update(service.id, { apiKey: event.target.value })} />
+                  </div>
+                ) : (
+                  <PuterAccount />
+                )}
+                <div className={keyed ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2'}>
+                  <div className="grid gap-1">
+                    <Label htmlFor={`${service.id}-model`}>Model</Label>
+                    <Input id={`${service.id}-model`} value={service.model} onChange={event => update(service.id, { model: event.target.value })} placeholder="model name" />
+                  </div>
+                  {keyed ? (
+                    <div className="grid gap-1">
+                      <Label htmlFor={`${service.id}-url`}>Base URL</Label>
+                      <Input id={`${service.id}-url`} value={service.baseURL} onChange={event => update(service.id, { baseURL: event.target.value })} placeholder="https://…/v1" />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" className="self-start" />}>
+              <PlusIcon />
+              Add a service
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64">
+              {SERVICE_PRESETS.map(option => (
+                <DropdownMenuItem key={option.id} onClick={() => add(option.id)}>
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <DialogFooter>
           <Button
@@ -64,11 +113,11 @@ export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onCl
               onOpenChange(false);
             }}
           >
-            Clear saved settings
+            Remove all services
           </Button>
           <Button
             onClick={() => {
-              onSave(draft);
+              onSave(finished());
               onOpenChange(false);
             }}
           >

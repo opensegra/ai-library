@@ -3,6 +3,7 @@
 import { BoxesIcon, ClockIcon, DownloadIcon, ImageUpIcon, LayoutGridIcon, MoonIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SparklesIcon, StarIcon, SunIcon, UploadIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import { GithubMark } from '@/components/library/GithubMark';
 import { NewBoardDialog } from '@/components/library/NewBoardDialog';
 import { type SidebarLink, useLibrarySidebar } from '@/components/library/useLibrarySidebar';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,10 @@ export function LibrarySidebar({ onNavigate }: LibrarySidebarProps) {
           <UploadIcon />
           Import
         </Button>
-        <Button variant="ghost" size="icon-sm" className="ml-auto" aria-label="Switch theme" onClick={toggleTheme}>
+        <Button variant="ghost" size="icon-sm" className="ml-auto" aria-label="Source code on GitHub" nativeButton={false} render={<a href="https://github.com/opensegra/ai-library" target="_blank" rel="noreferrer" />}>
+          <GithubMark />
+        </Button>
+        <Button variant="ghost" size="icon-sm" aria-label="Switch theme" onClick={toggleTheme}>
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </Button>
       </div>

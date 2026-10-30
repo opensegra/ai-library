@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 
-import type { PickerKind } from '@/app/(library)/studio/components/useSelectionPanel';
 import { useLibrary } from '@/hooks/client/useLibrary';
 import { searchAndSort } from '@/lib/catalogue/filterItems';
 import type { LibraryItem } from '@/lib/catalogue/types';
 import { isAdultCostume, isAdultPose } from '@/lib/studio/adultContent';
+
+export type PickerKind = 'poses' | 'costumes' | null;
 
 const LIMIT = 150;
 

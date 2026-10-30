@@ -21,7 +21,7 @@ export function ModelPanel({ photos, description, onPhotos, onDescription }: Mod
     <section className="flex flex-col gap-3 rounded-lg border p-4">
       <h2 className="text-sm font-semibold">Model</h2>
       <p className="text-xs text-muted-foreground">Add up to three photos of the person to draw. Their face, hair and body are kept; the pose comes from the drawing.</p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid max-w-sm grid-cols-3 gap-2">
         {photos.map((photo, index) => (
           <div key={photo.slice(-40)} className="relative">
             <img src={photo} alt={`Model photo ${index + 1}`} className="aspect-[3/4] w-full rounded-md border object-cover" />

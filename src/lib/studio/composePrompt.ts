@@ -38,9 +38,9 @@ export function composePrompt({ poses, costume, modelPhotoCount, description, ex
 
   poses.forEach((pose, index) => {
     lines.push(`${index + 1}. ${pose.name} (${pose.code}, ${pose.group}), ${pose.angle.toLowerCase()} – ${CAMERA[pose.angle] ?? pose.angle}.`);
-    if (pose.people > 1) lines.push('   This is a two-person pose: match the number of people and how they are placed. The second person is a fully dressed adult with a simple face.');
+    if (pose.people > 1) lines.push(`   This is a two-person pose: the model is the woman, posed with one adult man. ${pose.arrangement ?? 'The two are posed close together.'} Match the number of people and how they are placed. The man is fully dressed, with a simple face.`);
   });
-  lines.push('', `Scene: ${extraPrompt.trim() || 'clean studio shot, soft daylight, light grey background'}.`, 'No watermark, no text, no captions.');
+  lines.push('', `Scene and direction: ${extraPrompt.trim() || 'clean studio shot, soft daylight, light grey background'}.`, 'No watermark, no text, no captions.');
 
   return lines.join('\n');
 }

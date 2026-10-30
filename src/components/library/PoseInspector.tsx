@@ -3,9 +3,12 @@
 import { BoxesIcon, DownloadIcon, Maximize2Icon, SparklesIcon, StarIcon } from 'lucide-react';
 
 import { BoardMenu } from '@/components/library/BoardMenu';
+import { PromptBlock } from '@/components/library/PromptBlock';
 import { usePoseInspector } from '@/components/library/usePoseInspector';
 import { Button } from '@/components/ui/button';
 import { ANGLES } from '@/lib/catalogue/angles';
+import { posePrompt } from '@/lib/catalogue/describePose';
+import { DEFAULT_NEGATIVE_PROMPT } from '@/lib/catalogue/negativePrompt';
 import type { LibraryItem, Pose } from '@/lib/catalogue/types';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +48,8 @@ export function PoseInspector({ pose, list, angle, onAngle, onZoom }: PoseInspec
         </p>
         <h2 className="text-lg font-semibold leading-snug">{pose.name}</h2>
       </div>
+      <PromptBlock title="Description" text={posePrompt(pose, angle)} note="The camera line follows the angle picked above." />
+      <PromptBlock title="Negative prompt" text={DEFAULT_NEGATIVE_PROMPT} compact />
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={() => void openRig()} disabled={opening}>
           <BoxesIcon />

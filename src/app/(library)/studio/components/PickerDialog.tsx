@@ -2,8 +2,7 @@
 
 import { CheckIcon } from 'lucide-react';
 
-import type { PickerKind } from '@/app/(library)/studio/components/useSelectionPanel';
-import { usePickerDialog } from '@/app/(library)/studio/components/usePickerDialog';
+import { type PickerKind, usePickerDialog } from '@/app/(library)/studio/components/usePickerDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { isPose, itemLabel, itemTitle } from '@/lib/catalogue/types';

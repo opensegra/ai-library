@@ -1,5 +1,4 @@
-import { DEFAULT_BASE_URLS, DEFAULT_MODELS } from '@/lib/studio/providerDefaults';
-import type { AspectRatio, GeneratedImage, ImageProvider } from '@/lib/studio/types';
+import type { AspectRatio, GeneratedImage, ServerProtocol } from '@/lib/studio/types';
 
 export interface ReferenceImage {
   mediaType: string;
@@ -7,11 +6,12 @@ export interface ReferenceImage {
 }
 
 export interface ProviderCall {
-  provider: ImageProvider;
+  protocol: ServerProtocol;
   apiKey: string;
   baseURL: string;
   model: string;
   prompt: string;
+  negativePrompt?: string;
   images: ReferenceImage[];
   aspectRatio: AspectRatio;
   signal: AbortSignal;
@@ -36,10 +36,18 @@ async function readJson(response: Response, secret: string): Promise<Record<stri
   }
 }
 
+function quotaMessage(message: string, status: number): string | null {
+  if (/free_tier/i.test(message) && /limit:\s*0\b/.test(message)) return 'This key\'s free tier includes no image generation for this model. Turn on billing for the key\'s project, or use another service.';
+  if (status === 429 || /quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(message)) return 'This key has run out of quota for now. Wait and try again, check the service\'s plan and billing, or use another service.';
+
+  return null;
+}
+
 function errorMessage(payload: Record<string, unknown>, response: Response, secret: string, fallback: string): ProviderError {
   const error = payload.error as { message?: string; status?: string } | undefined;
+  const message = error?.message ?? error?.status ?? fallback;
 
-  return new ProviderError(hide(`${error?.message ?? error?.status ?? fallback} (${response.status})`, secret));
+  return new ProviderError(hide(`${quotaMessage(message, response.status) ?? message} (${response.status})`, secret));
 }
 
 async function asDataUrl(item: { b64_json?: string; url?: string }, signal: AbortSignal): Promise<string> {
@@ -97,6 +105,7 @@ async function callOpenAI(call: ProviderCall): Promise<GeneratedImage> {
     form.set('prompt', call.prompt);
     form.set('size', size);
     form.set('n', '1');
+    if (call.negativePrompt) form.set('negative_prompt', call.negativePrompt);
     call.images.forEach((image, index) => form.append('image[]', new Blob([Buffer.from(image.base64, 'base64')], { type: image.mediaType }), `reference-${index + 1}.${image.mediaType.split('/')[1] ?? 'png'}`));
 
     const response = await fetch(`${root}/images/edits`, { method: 'POST', headers: { authorization: `Bearer ${call.apiKey}` }, body: form, signal: call.signal });
@@ -112,7 +121,7 @@ async function callOpenAI(call: ProviderCall): Promise<GeneratedImage> {
   const response = await fetch(`${root}/images/generations`, {
     method: 'POST',
     headers: { authorization: `Bearer ${call.apiKey}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ model: call.model, prompt: call.prompt, size, n: 1 }),
+    body: JSON.stringify({ model: call.model, prompt: call.prompt, size, n: 1, ...(call.negativePrompt ? { negative_prompt: call.negativePrompt } : {}) }),
     signal: call.signal
   });
   const payload = await readJson(response, call.apiKey);
@@ -149,13 +158,34 @@ async function callSeedream(call: ProviderCall): Promise<GeneratedImage> {
   return { dataUrl: await asDataUrl((payload.data as { b64_json?: string; url?: string }[])[0] ?? {}, call.signal), model: call.model, referencesSent: call.images.length > 0 };
 }
 
-export function resolveCall(call: Omit<ProviderCall, 'baseURL' | 'model'> & { baseURL?: string; model?: string }): ProviderCall {
-  return { ...call, baseURL: call.baseURL?.trim() || DEFAULT_BASE_URLS[call.provider], model: call.model?.trim() || DEFAULT_MODELS[call.provider] };
+async function callChat(call: ProviderCall): Promise<GeneratedImage> {
+  const root = call.baseURL.replace(/\/$/, '');
+  const response = await fetch(`${root}/chat/completions`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${call.apiKey}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: call.model,
+      modalities: ['image', 'text'],
+      messages: [{ role: 'user', content: [{ type: 'text', text: `${call.prompt}\nAspect ratio: ${call.aspectRatio}.` }, ...call.images.map(image => ({ type: 'image_url', image_url: { url: `data:${image.mediaType};base64,${image.base64}` } }))] }]
+    }),
+    signal: call.signal
+  });
+  const payload = await readJson(response, call.apiKey);
+
+  if (!response.ok) throw errorMessage(payload, response, call.apiKey, 'The image service could not generate the image');
+
+  const message = (payload.choices as { message?: { content?: string; images?: { image_url?: { url?: string } }[] } }[] | undefined)?.[0]?.message;
+  const url = message?.images?.[0]?.image_url?.url;
+
+  if (!url) throw new ProviderError(message?.content?.trim() || 'The model answered without an image. Pick a model that can output images.');
+
+  return { dataUrl: url.startsWith('data:') ? url : await asDataUrl({ url }, call.signal), model: call.model, referencesSent: call.images.length > 0 };
 }
 
 export function generateImage(call: ProviderCall): Promise<GeneratedImage> {
-  if (call.provider === 'gemini') return callGemini(call);
-  if (call.provider === 'seedream') return callSeedream(call);
+  if (call.protocol === 'gemini') return callGemini(call);
+  if (call.protocol === 'seedream') return callSeedream(call);
+  if (call.protocol === 'chat') return callChat(call);
 
   return callOpenAI(call);
 }

@@ -13,6 +13,7 @@ export interface Pose {
   cls: string;
   name: string;
   images: Record<string, PoseImage>;
+  posture?: string[];
 }
 
 export interface Costume {

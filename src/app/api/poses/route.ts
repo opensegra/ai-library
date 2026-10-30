@@ -1,6 +1,7 @@
 import { readCatalogue } from '@/lib/catalogue/readCatalogue';
 import { filterPoses, searchAndSort } from '@/lib/catalogue/filterItems';
 import { angleName } from '@/lib/catalogue/angles';
+import { posePrompt } from '@/lib/catalogue/describePose';
 import { isAdultPose } from '@/lib/studio/adultContent';
 
 export async function GET(request: Request) {
@@ -12,6 +13,6 @@ export async function GET(request: Request) {
 
   return Response.json({
     total: poses.length,
-    poses: poses.slice(0, limit).map(pose => ({ code: pose.code, name: pose.name, group: pose.lineName, class: pose.cls, images: Object.fromEntries(Object.entries(pose.images).map(([angle, image]) => [angleName(angle).toLowerCase(), image])), rig: `/api/fits/${pose.code}` }))
+    poses: poses.slice(0, limit).map(pose => ({ code: pose.code, name: pose.name, group: pose.lineName, class: pose.cls, prompt: posePrompt(pose, '正面'), posture: pose.posture ?? [], images: Object.fromEntries(Object.entries(pose.images).map(([angle, image]) => [angleName(angle).toLowerCase(), image])), rig: `/api/fits/${pose.code}` }))
   });
 }
