@@ -9,9 +9,11 @@ interface ChatTurnProps {
   turn: StudioTurn;
   onCopy: (prompt: string) => void;
   onRetry: (result: StudioResult) => void;
+  onOpen: (result: StudioResult) => void;
+  canRetry: (resultId: string) => boolean;
 }
 
-export function ChatTurn({ turn, onCopy, onRetry }: ChatTurnProps) {
+export function ChatTurn({ turn, onCopy, onRetry, onOpen, canRetry }: ChatTurnProps) {
   const waiting = turn.results.filter(result => result.state === 'waiting').length;
   const made = turn.results.filter(result => result.state === 'done').length;
   const status = waiting ? `Making ${turn.results.length === 1 ? 'the image' : `${turn.results.length} images`}…` : `Made ${made} of ${turn.results.length} with ${turn.services}.`;
@@ -38,7 +40,7 @@ export function ChatTurn({ turn, onCopy, onRetry }: ChatTurnProps) {
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <p className="pt-1 text-sm text-muted-foreground">{status}</p>
-          <StudioResults results={turn.results} onCopy={onCopy} onRetry={onRetry} />
+          <StudioResults results={turn.results} onCopy={onCopy} onRetry={onRetry} onOpen={onOpen} canRetry={canRetry} />
         </div>
       </div>
     </div>

@@ -10,17 +10,21 @@ interface StudioResultsProps {
   results: StudioResult[];
   onCopy: (prompt: string) => void;
   onRetry: (result: StudioResult) => void;
+  onOpen: (result: StudioResult) => void;
+  canRetry: (resultId: string) => boolean;
 }
 
-export function StudioResults({ results, onCopy, onRetry }: StudioResultsProps) {
+export function StudioResults({ results, onCopy, onRetry, onOpen, canRetry }: StudioResultsProps) {
   return (
-    <div className={cn('grid gap-3', results.length === 1 ? 'max-w-2xl grid-cols-1' : 'grid-cols-1 sm:grid-cols-2')}>
+    <div className={cn('grid gap-3', results.length === 1 ? 'max-w-sm grid-cols-1' : 'max-w-xl grid-cols-2 sm:grid-cols-3')}>
       {results.map(result => (
         <figure key={result.id} className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-2">
           {result.state === 'done' && result.image ? (
-            <img src={result.image.dataUrl} alt={result.label} className="w-full rounded-lg bg-muted object-contain" />
+            <button type="button" onClick={() => onOpen(result)} aria-label={`Open ${result.label} full size`} className="overflow-hidden rounded-lg bg-muted">
+              <img src={result.image.dataUrl} alt={result.label} className="max-h-[22rem] w-full object-contain" />
+            </button>
           ) : (
-            <div className="flex aspect-[3/4] overflow-y-auto rounded-lg bg-muted p-3 text-center text-xs text-muted-foreground [overflow-wrap:anywhere]">
+            <div className="flex aspect-[3/4] max-h-[22rem] overflow-y-auto rounded-lg bg-muted p-3 text-center text-xs text-muted-foreground [overflow-wrap:anywhere]">
               {result.state === 'waiting' ? <Loader2Icon className="m-auto size-5 animate-spin" /> : <p className="m-auto">{result.error}</p>}
             </div>
           )}
@@ -31,7 +35,7 @@ export function StudioResults({ results, onCopy, onRetry }: StudioResultsProps) 
                 <DownloadIcon />
               </Button>
             ) : null}
-            {result.state === 'failed' ? (
+            {result.state === 'failed' && canRetry(result.id) ? (
               <Button variant="ghost" size="icon-xs" aria-label="Try again" onClick={() => onRetry(result)}>
                 <RotateCcwIcon />
               </Button>
@@ -41,6 +45,7 @@ export function StudioResults({ results, onCopy, onRetry }: StudioResultsProps) 
             </Button>
           </figcaption>
           {result.image?.warning ? <p className="text-xs text-amber-500">{result.image.warning}</p> : null}
+          {result.note ? <p className="text-xs text-muted-foreground">{result.note}</p> : null}
         </figure>
       ))}
     </div>

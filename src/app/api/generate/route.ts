@@ -16,6 +16,7 @@ interface GenerateBody {
   model?: string;
   prompt?: string;
   negativePrompt?: string;
+  accountId?: string;
   modelPhotos?: string[];
   scenePhoto?: string | null;
   costumeImage?: string | null;
@@ -55,6 +56,15 @@ function isMediaPath(path: unknown): path is string {
   return typeof path === 'string' && (path.startsWith('/media/') || (!!base && path.startsWith(`${base}/media/`))) && !path.includes('..');
 }
 
+export function GET() {
+  const protocol = process.env.IMAGE_PROTOCOL || 'gemini';
+  const preset = SERVICE_PRESETS.find(entry => entry.protocol === protocol);
+
+  if (!process.env.IMAGE_API_KEY || !preset) return Response.json({ server: null });
+
+  return Response.json({ server: { preset: preset.id, model: process.env.IMAGE_MODEL || preset.model } });
+}
+
 export async function POST(request: Request) {
   let body: GenerateBody;
 
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
   const protocol = (usesServerKey ? process.env.IMAGE_PROTOCOL || 'gemini' : body.protocol) as ServerProtocol;
   const preset = SERVICE_PRESETS.find(entry => entry.protocol === protocol);
   const apiKey = usesServerKey ? process.env.IMAGE_API_KEY || '' : body.apiKey!.trim();
+  const accountId = ((usesServerKey ? process.env.IMAGE_ACCOUNT_ID : body.accountId) ?? '').trim();
   const baseURL = safeBaseUrl((usesServerKey ? process.env.IMAGE_BASE_URL : body.baseURL) || preset?.baseURL || '', process.env.NODE_ENV === 'development');
   const model = ((usesServerKey ? process.env.IMAGE_MODEL : body.model) || preset?.model || '').trim();
   const aspectRatio = (body.aspectRatio ?? '3:4') as AspectRatio;
@@ -78,10 +89,12 @@ export async function POST(request: Request) {
   if (!SERVER_PROTOCOLS.has(protocol)) return refuse('That image service is not supported.');
   if (!baseURL) return refuse(baseURL === null ? 'The base URL must be a public http or https address.' : 'Add the base URL of the image service.');
   if (!model) return refuse('Add the model name of the image service.');
+  if (protocol === 'cloudflare' && !/^[a-f0-9]{32}$/i.test(accountId)) return refuse('Add the 32-character Cloudflare account ID, found on the Workers AI page of the Cloudflare dashboard.');
+  if (protocol === 'cloudflare' && !/^@(cf|hf)\/[\w.-]+(\/[\w.-]+)*$/.test(model)) return refuse('Cloudflare model names look like @cf/black-forest-labs/flux-2-klein-4b.');
   if (!RATIOS.has(aspectRatio)) return refuse('That aspect ratio is not supported.');
   if (!body.prompt?.trim() || body.prompt.length > 12000) return refuse('The prompt is empty or too long.');
   if (photos.length > 3 || poses.length < 1 || poses.length > 12) return refuse('Use up to three model photos and one to six poses.');
-  if (!poses.every(path => isMediaPath(path) || isRender(path)) || (body.costumeImage != null && !isMediaPath(body.costumeImage))) return refuse('Poses and costumes must come from this library.');
+  if (!poses.every(path => isMediaPath(path) || isRender(path)) || (body.costumeImage != null && !isMediaPath(body.costumeImage) && !isRender(body.costumeImage))) return refuse('Poses and costumes must come from this library.');
 
   const photoImages: ReferenceImage[] = [];
 
@@ -98,13 +111,14 @@ export async function POST(request: Request) {
   if (scene) photoImages.push({ mediaType: scene[1], base64: scene[2] });
 
   try {
-    const references = [...photoImages, ...(body.costumeImage ? [await mediaReference(body.costumeImage, request)] : []), ...(await Promise.all(poses.map(path => (isRender(path) ? renderReference(path) : mediaReference(path, request)))))];
-    const image = await generateImage({ protocol, apiKey, baseURL, model, prompt: body.prompt, negativePrompt: typeof body.negativePrompt === 'string' ? body.negativePrompt.trim().slice(0, 2000) || undefined : undefined, images: references, aspectRatio, signal: request.signal });
+    const references = [...photoImages, ...(body.costumeImage ? [isRender(body.costumeImage) ? renderReference(body.costumeImage) : await mediaReference(body.costumeImage, request)] : []), ...(await Promise.all(poses.map(path => (isRender(path) ? renderReference(path) : mediaReference(path, request)))))];
+    const image = await generateImage({ protocol, apiKey, baseURL, model, accountId, prompt: body.prompt, negativePrompt: typeof body.negativePrompt === 'string' ? body.negativePrompt.trim().slice(0, 2000) || undefined : undefined, images: references, aspectRatio, signal: request.signal });
 
     return Response.json(image);
   } catch (error) {
     if (error instanceof ProviderError) return refuse(error.message, 502);
     if ((error as Error).name === 'AbortError') return refuse('The request was cancelled.', 499);
+    if (error instanceof TypeError) return refuse(`The image service at ${new URL(baseURL).host} could not be reached. Check the base URL and your connection, then try again.`, 502);
 
     return refuse('The image could not be generated.', 500);
   }

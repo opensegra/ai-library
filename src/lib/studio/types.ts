@@ -1,8 +1,8 @@
-export type ImageProtocol = 'gemini' | 'openai' | 'seedream' | 'chat' | 'puter';
+export type ImageProtocol = 'gemini' | 'openai' | 'seedream' | 'chat' | 'cloudflare' | 'puter';
 
 export type ServerProtocol = Exclude<ImageProtocol, 'puter'>;
 
-export type ServicePresetId = 'puter' | 'gemini' | 'openai' | 'openrouter' | 'xai' | 'together' | 'siliconflow' | 'zhipu' | 'seedream' | 'byteplus' | 'custom';
+export type ServicePresetId = 'puter' | 'cloudflare' | 'gemini' | 'openai' | 'openrouter' | 'xai' | 'together' | 'siliconflow' | 'zhipu' | 'seedream' | 'byteplus' | 'custom';
 
 export type AspectRatio = '3:4' | '1:1' | '4:3' | '9:16' | '16:9';
 
@@ -14,6 +14,7 @@ export interface ImageService {
   apiKey: string;
   baseURL: string;
   model: string;
+  accountId?: string;
 }
 
 export interface StudioSettings {
@@ -62,6 +63,7 @@ export interface GenerateRequest {
   model: string;
   prompt: string;
   negativePrompt?: string;
+  accountId?: string;
   modelPhotos: string[];
   scenePhoto?: string | null;
   costumeImage: string | null;

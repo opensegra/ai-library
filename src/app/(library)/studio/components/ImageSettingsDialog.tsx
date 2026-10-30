@@ -2,6 +2,8 @@
 
 import { ExternalLinkIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 
+import { DriveSettings } from '@/app/(library)/studio/components/DriveSettings';
+import { ModelField } from '@/app/(library)/studio/components/ModelField';
 import { PuterAccount } from '@/app/(library)/studio/components/PuterAccount';
 import { useImageSettingsDialog } from '@/app/(library)/studio/components/useImageSettingsDialog';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { needsKey, presetFor, SERVICE_PRESETS } from '@/lib/studio/servicePresets';
+import { CLOUDFLARE_COSTS, needsKey, presetFor, SERVICE_PRESETS } from '@/lib/studio/servicePresets';
 import type { ServicePresetId, StudioSettings } from '@/lib/studio/types';
 
 interface ImageSettingsDialogProps {
@@ -63,10 +65,10 @@ export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onCl
                 {keyed ? (
                   <div className="grid gap-1">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor={`${service.id}-key`}>API key</Label>
+                      <Label htmlFor={`${service.id}-key`}>{preset.needsAccount ? 'API token' : 'API key'}</Label>
                       {preset.keyPage ? (
                         <a href={preset.keyPage} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          Get a key
+                          {preset.needsAccount ? 'Create a token' : 'Get a key'}
                           <ExternalLinkIcon className="size-3" />
                         </a>
                       ) : null}
@@ -77,17 +79,24 @@ export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onCl
                   <PuterAccount />
                 )}
                 <div className={keyed ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2'}>
-                  <div className="grid gap-1">
-                    <Label htmlFor={`${service.id}-model`}>Model</Label>
-                    <Input id={`${service.id}-model`} value={service.model} onChange={event => update(service.id, { model: event.target.value })} placeholder="model name" />
-                  </div>
-                  {keyed ? (
+                  <ModelField id={`${service.id}-model`} models={preset.models} value={service.model} onChange={model => update(service.id, { model })} />
+                  {preset.needsAccount ? (
+                    <div className="grid gap-1">
+                      <Label htmlFor={`${service.id}-account`}>Account ID</Label>
+                      <Input id={`${service.id}-account`} value={service.accountId ?? ''} onChange={event => update(service.id, { accountId: event.target.value.trim() })} placeholder="32 characters" autoComplete="off" />
+                    </div>
+                  ) : keyed ? (
                     <div className="grid gap-1">
                       <Label htmlFor={`${service.id}-url`}>Base URL</Label>
                       <Input id={`${service.id}-url`} value={service.baseURL} onChange={event => update(service.id, { baseURL: event.target.value })} placeholder="https://…/v1" />
                     </div>
                   ) : null}
                 </div>
+                {preset.needsAccount ? (
+                  <p className="text-xs text-muted-foreground">
+                    The account ID is on the Workers AI page of the Cloudflare dashboard. Use a token with Workers AI permission. Usage is billed to that Cloudflare account, with a free daily allowance. Up to {preset.maxReferences} reference images are sent, each shrunk to fit {preset.maxReferenceSide! + 1} px.{CLOUDFLARE_COSTS[service.model] ? ` This model costs ${CLOUDFLARE_COSTS[service.model]} (10,000 Neurons, resetting at 00:00 UTC).` : ''}
+                  </p>
+                ) : null}
               </div>
             );
           })}
@@ -104,6 +113,7 @@ export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onCl
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <DriveSettings />
         </div>
         <DialogFooter>
           <Button

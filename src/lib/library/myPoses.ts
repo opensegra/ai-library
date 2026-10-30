@@ -1,4 +1,5 @@
 import type { Pose } from '@/lib/catalogue/types';
+import { runInStore } from '@/lib/library/browserDatabase';
 import type { FigurePlacement } from '@/lib/library/libraryState';
 
 export interface MyPoseView {
@@ -21,33 +22,14 @@ export interface MyPose {
   views: MyPoseView[];
 }
 
-const DATABASE = 'ai-library';
-const STORE = 'my-poses';
 const EMPTY: MyPose[] = [];
 
 let poses: MyPose[] | null = null;
 let loading: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
-function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
-
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: 'id' });
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
-  const database = await openDatabase();
-
-  return new Promise((resolve, reject) => {
-    const request = work(database.transaction(STORE, mode).objectStore(STORE));
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  return runInStore('my-poses', mode, work);
 }
 
 function notify() {

@@ -12,12 +12,14 @@ export interface ProviderCall {
   model: string;
   prompt: string;
   negativePrompt?: string;
+  accountId?: string;
   images: ReferenceImage[];
   aspectRatio: AspectRatio;
   signal: AbortSignal;
 }
 
 const OPENAI_SIZES: Record<AspectRatio, string> = { '1:1': '1024x1024', '3:4': '1024x1536', '9:16': '1024x1536', '4:3': '1536x1024', '16:9': '1536x1024' };
+const CLOUDFLARE_SIZES: Record<AspectRatio, [number, number]> = { '1:1': [1024, 1024], '3:4': [768, 1024], '9:16': [720, 1280], '4:3': [1024, 768], '16:9': [1280, 720] };
 const SEEDREAM_SIZES: Record<AspectRatio, string> = { '1:1': '2048x2048', '3:4': '1728x2304', '9:16': '1600x2848', '4:3': '2304x1728', '16:9': '2848x1600' };
 
 export class ProviderError extends Error {}
@@ -182,7 +184,39 @@ async function callChat(call: ProviderCall): Promise<GeneratedImage> {
   return { dataUrl: url.startsWith('data:') ? url : await asDataUrl({ url }, call.signal), model: call.model, referencesSent: call.images.length > 0 };
 }
 
+function cloudflareMessage(payload: Record<string, unknown>, status: number, secret: string): ProviderError {
+  const errors = (payload.errors as { message?: string; code?: number }[] | undefined) ?? [];
+  const message = errors.map(error => error.message).filter(Boolean).join(' ') || `Cloudflare answered ${status}.`;
+
+  if (status === 401 || status === 403 || /authentication|unauthori[sz]ed|token/i.test(message)) return new ProviderError(hide(`Cloudflare did not accept the API token for this account. Check the account ID and that the token has Workers AI permission. (${status})`, secret));
+  if (status === 429 || /neuron|quota|capacity|daily|limit/i.test(message)) return new ProviderError(hide(`This Cloudflare account has used its free Workers AI allowance for today, which resets at 00:00 UTC, or is sending too fast. (${status}: ${message})`, secret));
+
+  return new ProviderError(hide(`${message} (${status})`, secret));
+}
+
+async function callCloudflare(call: ProviderCall): Promise<GeneratedImage> {
+  const [width, height] = CLOUDFLARE_SIZES[call.aspectRatio];
+  const form = new FormData();
+
+  form.set('prompt', call.prompt);
+  form.set('width', String(width));
+  form.set('height', String(height));
+  call.images.slice(0, 4).forEach((image, index) => form.append(`input_image_${index}`, new Blob([Buffer.from(image.base64, 'base64')], { type: image.mediaType }), `reference-${index + 1}.${image.mediaType.split('/')[1] ?? 'jpeg'}`));
+
+  const response = await fetch(`${call.baseURL.replace(/\/$/, '')}/accounts/${call.accountId}/ai/run/${call.model}`, { method: 'POST', headers: { authorization: `Bearer ${call.apiKey}` }, body: form, signal: call.signal });
+  const payload = await readJson(response, call.apiKey);
+
+  if (!response.ok || payload.success === false) throw cloudflareMessage(payload, response.status, call.apiKey);
+
+  const image = ((payload.result as { image?: string } | undefined)?.image ?? (payload.image as string | undefined)) || '';
+
+  if (!image) throw new ProviderError('Cloudflare answered without an image. Pick a FLUX.2 model, which accepts reference images.');
+
+  return { dataUrl: image.startsWith('data:') ? image : `data:image/${image.startsWith('iVBOR') ? 'png' : 'jpeg'};base64,${image}`, model: call.model, referencesSent: call.images.length > 0 };
+}
+
 export function generateImage(call: ProviderCall): Promise<GeneratedImage> {
+  if (call.protocol === 'cloudflare') return callCloudflare(call);
   if (call.protocol === 'gemini') return callGemini(call);
   if (call.protocol === 'seedream') return callSeedream(call);
   if (call.protocol === 'chat') return callChat(call);

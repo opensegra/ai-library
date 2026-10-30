@@ -107,9 +107,13 @@ The studio puts your own model into any pose and costume with an image-generatio
    with **Add to studio** from its detail panel.
 3. Under **Image settings**, add one or more services. **Puter** needs no key: you sign in with
    your own Puter account, which pays for what you generate, and the image is made in your browser.
-   The other presets take an API key: Google Gemini, OpenAI, OpenRouter, xAI, Together,
+   **Cloudflare Workers AI** takes your account ID and an API token with Workers AI permission, and
+   is billed to that Cloudflare account with a free daily allowance; it uses the FLUX.2 models, which
+   take up to four reference images, so the studio keeps the most useful four and shrinks them to fit
+   512 px. The other presets take an API key: Google Gemini, OpenAI, OpenRouter, xAI, Together,
    SiliconFlow, Zhipu, Seedream and BytePlus, and any other OpenAI-compatible service can be added
-   by its base URL and model. Keys are kept in your browser and sent only with each generate request.
+   by its base URL and model. Each service lists its known models, and **Custom model** takes any
+   other model ID. Keys are kept in your browser and sent only with each generate request.
 4. Tick the services to generate with, describe the scene and send. Each pose becomes its own
    image, or all of them share one sheet, and every selected service makes its own version.
 
@@ -121,11 +125,28 @@ A default negative prompt (malformed hands and limbs, extra fingers, watermarks,
 sent with every image; change it under the options menu with **Negative prompt**. Services that take
 a separate negative prompt get it as one, and the others read it as an "Avoid" line.
 
+Every chat and generated image is kept in this browser, so a reload brings them back. **Images**
+lists everything generated, newest first: open any image full size, download or delete it, or
+download or delete them all. API keys are never stored with them.
+
+Chats are listed beside the studio (under **Chats** on smaller screens): each one keeps its own
+turns and images, several can generate at once, and the page asks before a reload or close while
+anything is still being made.
+
+**Google Drive.** After the first image, the studio asks whether to save new images to Google Drive
+automatically. Saving uses Google's `drive.file` permission, so the site can only see the files it
+creates, in an AI Library folder; turn it on or off in Image settings, or save single images from the
+gallery and viewer. To enable it on your own deployment, create an OAuth client ID (type *Web
+application*) in Google Cloud, add the site's origins (for example `http://localhost:3010`) as
+authorised JavaScript origins, enable the Google Drive API, and set `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+before building. Without it, Drive saving stays hidden.
+
 Without a key, **Copy prompt** gives you the full prompt to use in any other image tool, with the
 model photos, the costume image and the pose drawing as references in that order.
 
 To use a key held on the server instead, set `IMAGE_API_KEY` in the environment, and optionally
-`IMAGE_PROTOCOL` (`gemini`, `openai`, `seedream` or `chat`), `IMAGE_BASE_URL` and `IMAGE_MODEL`.
+`IMAGE_PROTOCOL` (`gemini`, `openai`, `seedream`, `chat` or `cloudflare`), `IMAGE_BASE_URL` and
+`IMAGE_MODEL`; Cloudflare also needs `IMAGE_ACCOUNT_ID`.
 
 ## API
 
