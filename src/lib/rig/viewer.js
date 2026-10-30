@@ -378,7 +378,7 @@ async function getLandmarker(status, attempt = 1) {
 }
 async function loadLandmarker(status) {
   status("Loading the pose detector (about 10 MB, once per visit)…");
-  const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+  const vision = await import("@mediapipe/tasks-vision");
   const files = await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
   landmarker = await vision.PoseLandmarker.createFromOptions(files, {
     baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task", delegate: "CPU" },
@@ -421,6 +421,13 @@ function toEntry(result, map) {
     world: world.map(p => [p.x, p.y, p.z, p.visibility ?? 1]),
     image: result.landmarks[i].map(p => map ? map(p.x, p.y) : [p.x, p.y]),
   }));
+  const visibility = f => f.world.reduce((t, p) => t + p[3], 0) / f.world.length;
+  const torso = f => { const c = [11, 12, 23, 24].reduce((t, i) => [t[0] + f.image[i][0] / 4, t[1] + f.image[i][1] / 4], [0, 0]); const size = Math.hypot((f.image[11][0] + f.image[12][0] - f.image[23][0] - f.image[24][0]) / 2, (f.image[11][1] + f.image[12][1] - f.image[23][1] - f.image[24][1]) / 2); return { c, size }; };
+  figures.sort((a, b) => visibility(b) - visibility(a));
+  for (let i = figures.length - 1; i > 0; i--) {
+    const a = torso(figures[i]);
+    if (figures.slice(0, i).some(other => { const b = torso(other); return Math.hypot(a.c[0] - b.c[0], a.c[1] - b.c[1]) < 0.35 * Math.max(a.size, b.size); })) figures.splice(i, 1);
+  }
   figures.sort((a, b) => a.image.reduce((s, q) => s + q[0], 0) - b.image.reduce((s, q) => s + q[0], 0));
   const score = figures.reduce((s, f) => s + f.world.reduce((t, p) => t + p[3], 0) / f.world.length, 0) / figures.length;
   return { found: figures.length, want: figures.length, score, figures };
