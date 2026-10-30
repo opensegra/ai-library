@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 import { useBrowserQuery } from '@/hooks/client/useBrowserQuery';
 import { useLibrary } from '@/hooks/client/useLibrary';
-import { ANGLES } from '@/lib/catalogue/angles';
+import { angleFromSlug, ANGLES, angleSlug } from '@/lib/catalogue/angles';
 import { type SortOrder, searchAndSort } from '@/lib/catalogue/filterItems';
 import { isPose, type LibraryItem } from '@/lib/catalogue/types';
 
@@ -18,7 +18,8 @@ export function useItemBrowser(items: LibraryItem[]) {
   const query = read('q') ?? '';
   const sort = (read('sort') as SortOrder | null) ?? 'number';
   const seed = Number(read('seed') ?? 1);
-  const angle = read('angle') ?? ANGLES[0].jp;
+  const writtenAngle = read('angle');
+  const angle = angleFromSlug(writtenAngle) ?? ANGLES[0].jp;
   const selectedUid = read('item');
   const list = useMemo(() => searchAndSort(items, query, sort, seed), [items, query, sort, seed]);
   const selected = useMemo(() => items.find(item => item.uid === selectedUid) ?? null, [items, selectedUid]);
@@ -55,6 +56,10 @@ export function useItemBrowser(items: LibraryItem[]) {
   }, []);
 
   useEffect(() => {
+    if (writtenAngle && writtenAngle !== angleSlug(angle)) write({ angle: angle === ANGLES[0].jp ? null : angleSlug(angle) });
+  }, [angle, writtenAngle, write]);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
 
@@ -88,7 +93,7 @@ export function useItemBrowser(items: LibraryItem[]) {
     closeInspector: () => write({ item: null }),
     setQuery: (value: string) => write({ q: value || null }),
     setSort: (value: SortOrder) => write({ sort: value === 'number' ? null : value, seed: value === 'shuffle' ? String(Math.floor(Math.random() * 1e9)) : null }),
-    setAngle: (value: string) => write({ angle: value === ANGLES[0].jp ? null : value }),
+    setAngle: (value: string) => write({ angle: value === ANGLES[0].jp ? null : angleSlug(value) }),
     openCompare: () => (compare.length >= 2 ? setCompareOpen(true) : toast.info('Tick two to four items to compare them.'))
   };
 }

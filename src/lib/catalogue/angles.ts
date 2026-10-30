@@ -17,3 +17,11 @@ export const ANGLES: ViewAngle[] = [
 export function angleName(jp: string): string {
   return ANGLES.find(angle => angle.jp === jp)?.en ?? jp;
 }
+
+export function angleSlug(jp: string): string {
+  return angleName(jp).toLowerCase();
+}
+
+export function angleFromSlug(slug: string | null): string | null {
+  return ANGLES.find(angle => angle.en.toLowerCase() === slug?.toLowerCase() || angle.jp === slug)?.jp ?? null;
+}

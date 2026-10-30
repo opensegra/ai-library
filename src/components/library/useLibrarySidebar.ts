@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { useLibrary } from '@/hooks/client/useLibrary';
 import { COLOURS, colourName } from '@/lib/catalogue/facets';
+import { groupBySlug, groupSlug } from '@/lib/catalogue/groupSlug';
 import { buildLibraryExport, isLibraryExport, mergeLibraryExport } from '@/lib/library/libraryExport';
 import { ADULT_COSTUME_CATEGORIES, ADULT_POSE_LINES, isAdultCostume, isAdultPose } from '@/lib/studio/adultContent';
 
@@ -44,9 +45,9 @@ export function useLibrarySidebar() {
   const { resolvedTheme, setTheme } = useTheme();
   const [boardDialogOpen, setBoardDialogOpen] = useState(false);
   const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
-  const line = params.get('line');
+  const line = groupBySlug(catalogue.lines, params.get('line'))?.key ?? null;
   const cls = params.get('cls');
-  const cat = params.get('cat');
+  const cat = groupBySlug(catalogue.categories, params.get('cat'))?.key ?? null;
   const colour = params.get('colour');
 
   const sections = useMemo<SidebarSection[]>(() => {
@@ -60,12 +61,12 @@ export function useLibrarySidebar() {
     const poseLinks: SidebarLink[] = [{ href: '/poses', label: 'All poses', count: visiblePoses.length, icon: 'pose', active: onPoses && !line }];
 
     for (const group of catalogue.lines.filter(entry => state.showAdult || !ADULT_POSE_LINES.has(entry.key))) {
-      poseLinks.push({ href: `/poses?line=${encodeURIComponent(group.key)}`, label: group.name, count: poseCounts[group.key], depth: 1, active: onPoses && line === group.key && !cls });
+      poseLinks.push({ href: `/poses?line=${groupSlug(group)}`, label: group.name, count: poseCounts[group.key], depth: 1, active: onPoses && line === group.key && !cls });
       if (onPoses && line === group.key) {
         const classes = countBy(catalogue.poses.filter(pose => pose.line === group.key), pose => pose.cls);
 
         for (const [name, count] of Object.entries(classes))
-          poseLinks.push({ href: `/poses?line=${encodeURIComponent(group.key)}&cls=${encodeURIComponent(name)}`, label: name, count, depth: 2, active: cls === name });
+          poseLinks.push({ href: `/poses?line=${groupSlug(group)}&cls=${encodeURIComponent(name)}`, label: name, count, depth: 2, active: cls === name });
       }
     }
     poseLinks.push({ href: '/pose-from-image', label: 'Pose from your image', icon: 'image', active: pathname === '/pose-from-image' });
@@ -74,7 +75,7 @@ export function useLibrarySidebar() {
     const costumeLinks: SidebarLink[] = [{ href: '/costumes', label: 'All costumes', count: visibleCostumes.length, icon: 'costume', active: onCostumes && !cat && !colour }];
 
     for (const group of catalogue.categories.filter(entry => state.showAdult || !ADULT_COSTUME_CATEGORIES.has(entry.key)))
-      costumeLinks.push({ href: `/costumes?cat=${encodeURIComponent(group.key)}`, label: group.name, count: costumeCounts[group.key], depth: 1, active: onCostumes && cat === group.key });
+      costumeLinks.push({ href: `/costumes?cat=${groupSlug(group)}`, label: group.name, count: costumeCounts[group.key], depth: 1, active: onCostumes && cat === group.key });
 
     const colourLinks: SidebarLink[] = Object.entries(COLOURS)
       .filter(([word]) => colourCounts[word])

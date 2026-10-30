@@ -1,17 +1,19 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useBrowserQuery } from '@/hooks/client/useBrowserQuery';
 import { useLibrary } from '@/hooks/client/useLibrary';
 import { colourName } from '@/lib/catalogue/facets';
 import { filterCostumes } from '@/lib/catalogue/filterItems';
+import { groupBySlug, groupSlug } from '@/lib/catalogue/groupSlug';
 import { isAdultCostume } from '@/lib/studio/adultContent';
 
 export function useCostumesScreen() {
   const { catalogue, state } = useLibrary();
   const { read, readList, write } = useBrowserQuery();
-  const cat = read('cat');
+  const group = groupBySlug(catalogue.categories, read('cat'));
+  const cat = group?.key ?? null;
   const colour = read('colour');
   const wordsKey = read('words') ?? '';
   const words = useMemo(() => wordsKey.split(',').filter(Boolean), [wordsKey]);
@@ -26,7 +28,12 @@ export function useCostumesScreen() {
 
     return counts;
   }, [costumes]);
-  const group = catalogue.categories.find(entry => entry.key === cat);
+  const written = read('cat');
+
+  useEffect(() => {
+    if (group && written !== groupSlug(group)) write({ cat: groupSlug(group) });
+  }, [group, written, write]);
+
   const title = [group?.name ?? (colour ? null : 'All costumes'), colour ? colourName(colour) : null].filter(Boolean).join(' · ');
 
   const toggleWord = (word: string) => {
