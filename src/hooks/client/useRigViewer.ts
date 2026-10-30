@@ -9,6 +9,9 @@ import { useLibrary } from '@/hooks/client/useLibrary';
 import type { PoseFit } from '@/lib/fitting/autofit';
 import { ANGLES } from '@/lib/catalogue/angles';
 import { isPose, type LibraryItem, type Pose } from '@/lib/catalogue/types';
+import type { FigurePlacement } from '@/lib/library/libraryState';
+import { type MyPose, myPosesSnapshot, nextMyPoseCode, saveMyPose } from '@/lib/library/myPoses';
+import type { RigView } from '@/lib/rig/viewer';
 import { sendPoseRender } from '@/lib/studio/studioStore';
 
 async function fetchFit(code: string): Promise<PoseFit> {
@@ -19,11 +22,72 @@ async function fetchFit(code: string): Promise<PoseFit> {
   return (await response.json()) as PoseFit;
 }
 
+async function createPose(basedOn: MyPose['basedOn'], framing: MyPose['framing'], name: string, views: RigView[], figures: FigurePlacement[]): Promise<MyPose> {
+  const code = nextMyPoseCode(basedOn.code, myPosesSnapshot());
+  const created: MyPose = { id: crypto.randomUUID(), code, name, createdAt: new Date().toISOString(), framing, basedOn, figures: structuredClone(figures), views };
+
+  await saveMyPose(created);
+
+  return created;
+}
+
 export function useRigViewer(list: LibraryItem[]) {
   const { state, update, touchRecent } = useLibrary();
   const { write } = useBrowserQuery();
   const router = useRouter();
   const reopen = useRef<(pose: Pose, angleJp: string) => Promise<void>>(async () => {});
+
+  const announceCreated = useCallback(
+    (saving: Promise<MyPose>) =>
+      saving
+        .then(created =>
+          toast.success(`Saved as ${created.code} in My poses.`, {
+            action: {
+              label: 'Open My poses',
+              onClick: () => {
+                void import('@/lib/rig/viewer').then(viewer => viewer.RigViewer.close());
+                router.push(`/my-poses?item=${created.id}`);
+              }
+            }
+          })
+        )
+        .catch((error: Error) => toast.error(`The pose could not be saved: ${error.message}`)),
+    [router]
+  );
+
+  const openSaved = useCallback(
+    async (saved: MyPose, angleJp: string): Promise<void> => {
+      const { RigViewer } = await import('@/lib/rig/viewer');
+      const images = saved.views.map(view => ({ label: view.label, jp: view.jp, url: view.full, yaw: view.yaw, pitch: view.pitch }));
+
+      await RigViewer.open({
+        code: saved.code,
+        title: saved.name,
+        figures: structuredClone(saved.figures),
+        source: 'edited',
+        images,
+        imageIndex: Math.max(0, images.findIndex(image => image.jp === angleJp)),
+        position: '',
+        framing: saved.framing,
+        proportions: null,
+        onStep: null,
+        onCreate: (views, figures) => void announceCreated(createPose(saved.basedOn, saved.framing, saved.name, views, figures)),
+        onStudio: (image, depth) => {
+          sendPoseRender(`m:${saved.id}`, angleJp, image, depth);
+          toast.success(`${saved.code} sent to the studio as a 3D render with its depth map.`, {
+            action: {
+              label: 'Open studio',
+              onClick: () => {
+                RigViewer.close();
+                router.push('/studio');
+              }
+            }
+          });
+        }
+      });
+    },
+    [announceCreated, router]
+  );
 
   const openRig = useCallback(
     async (pose: Pose, angleJp: string): Promise<void> => {
@@ -76,9 +140,10 @@ export function useRigViewer(list: LibraryItem[]) {
           toast.success(`${pose.code} rig saved.`);
         },
         onRefit: () => structuredClone(fit.figures),
-        onStudio: image => {
-          sendPoseRender(pose.uid, angleJp, image);
-          toast.success(`${pose.code} sent to the studio as a 3D render.`, {
+        onCreate: (views, figures) => void announceCreated(createPose({ uid: pose.uid, code: pose.code, name: pose.name, line: pose.line, cls: pose.cls }, pose.line === '上半身1人' ? 'upper' : 'full', pose.name, views, figures)),
+        onStudio: (image, depth) => {
+          sendPoseRender(pose.uid, angleJp, image, depth);
+          toast.success(`${pose.code} sent to the studio as a 3D render with its depth map.`, {
             action: {
               label: 'Open studio',
               onClick: () => {
@@ -90,12 +155,12 @@ export function useRigViewer(list: LibraryItem[]) {
         }
       });
     },
-    [list, state.rigs, update, write, touchRecent, router]
+    [list, state.rigs, update, write, touchRecent, router, announceCreated]
   );
 
   useEffect(() => {
     reopen.current = openRig;
   }, [openRig]);
 
-  return { openRig };
+  return { openRig, openSaved };
 }

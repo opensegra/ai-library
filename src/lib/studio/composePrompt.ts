@@ -40,6 +40,12 @@ export function composePrompt({ poses, costume, modelPhotoCount, hasScene, descr
     next += 1;
   }
   roles.push(`* ${images(next, poses.length)} – Pose and body positioning: Follow the mannequin's pose, including limb placement, body orientation, posture, and camera-facing direction.`);
+  next += poses.length;
+  poses.forEach((pose, index) => {
+    if (!pose.hasDepth) return;
+    roles.push(`* ${images(next, 1)} – Depth map of pose ${index + 1} (${pose.code}), from the same camera: lighter is nearer the camera and darker is further away. Use it to place each arm, leg and hand correctly in front of or behind the body, and to match how the body turns and leans in depth.`);
+    next += 1;
+  });
 
   const subject = modelPhotoCount ? `Replace the mannequin with the person from ${images(1, modelPhotoCount)}, an adult.` : 'Replace the mannequin with a realistic adult female fashion model.';
   const lines = [
@@ -76,7 +82,7 @@ export function composePrompt({ poses, costume, modelPhotoCount, hasScene, descr
     "* Preserve the identity of each reference image's intended role.",
     costume ? '* Do not redesign or substitute the outfit.' : '* Do not copy the bare mannequin body from the pose drawing.',
     '* Do not unnecessarily alter the pose.',
-    '* Never draw the sketch lines, joint circles or proportion guides from the pose drawing.',
+    '* Never draw the sketch lines, joint circles or proportion guides from the pose drawing, and never show the grey depth map itself.',
     '* Avoid distorted hands, feet, fingers, limbs, or facial features.',
     '* Avoid artificial-looking skin, excessive retouching, or CGI aesthetics.',
     '* Maintain realistic garment fitting and natural fabric folds.',

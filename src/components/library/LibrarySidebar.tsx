@@ -1,6 +1,6 @@
 'use client';
 
-import { BoxesIcon, ClockIcon, DownloadIcon, ImageUpIcon, LayoutGridIcon, MoonIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SparklesIcon, StarIcon, SunIcon, UploadIcon } from 'lucide-react';
+import { BoxesIcon, ClockIcon, DownloadIcon, ImageUpIcon, LayoutGridIcon, MoonIcon, PencilRulerIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SparklesIcon, StarIcon, SunIcon, UploadIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { GithubMark } from '@/components/library/GithubMark';
@@ -19,7 +19,7 @@ interface SidebarRowProps {
   onNavigate?: () => void;
 }
 
-const ICONS = { pose: PersonStandingIcon, costume: ShirtIcon, star: StarIcon, clock: ClockIcon, rig: BoxesIcon, board: LayoutGridIcon, image: ImageUpIcon, studio: SparklesIcon };
+const ICONS = { pose: PersonStandingIcon, costume: ShirtIcon, star: StarIcon, clock: ClockIcon, rig: BoxesIcon, board: LayoutGridIcon, image: ImageUpIcon, studio: SparklesIcon, mine: PencilRulerIcon };
 
 function SidebarRow({ link, onNavigate }: SidebarRowProps) {
   const Icon = link.icon ? ICONS[link.icon] : null;

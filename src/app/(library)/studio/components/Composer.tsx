@@ -83,7 +83,7 @@ export function Composer(props: ComposerProps) {
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">{pose.code}</p>
                     <p className="line-clamp-2 text-sm">{pose.name}</p>
-                    {image ? <p className="mt-1 text-xs text-muted-foreground">Rendered from the 3D rig. Pick an angle to use the drawing instead.</p> : null}
+                    {image ? <p className="mt-1 text-xs text-muted-foreground">Rendered from the 3D rig, with a depth map. Pick an angle to use the drawing instead.</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {ANGLES.filter(entry => pose.images[entry.jp]).map(entry => (

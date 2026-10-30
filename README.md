@@ -68,7 +68,18 @@ NEXT_PUBLIC_MEDIA_BASE_URL=https://your-bucket.example.com pnpm build
    variation.
 4. Choose **Download .glb** for a rigged, posed mesh, or **Download .bvh** for the skeleton alone.
 5. Choose **Use in studio** to send the mannequin, exactly as framed, to the studio as the pose
-   reference in place of the drawing.
+   reference in place of the drawing, together with its depth map.
+
+**Save as new pose** draws the current pose in the library's style from all five angles (front,
+above, below, side and diagonal) at 900 × 1200, with a depth map for each, and keeps it under
+**My poses** in this browser. Saved poses can be browsed, downloaded, reopened in the 3D rig and
+used in the studio like any other pose, so editing, mirroring and varying a pose gives you new
+ones.
+
+**Depth** shows the posed mannequin as a depth map (lighter is nearer the camera), and **Depth .png**
+downloads it. A depth map tells an image model what the outline cannot: which arm or leg is in
+front, and how the body turns and leans. In the studio it is sent beside the render, and the prompt
+explains how to read it.
 
 The model uses a 17-bone skeleton (pelvis, spine, chest, neck, head, upper arms, forearms, hands,
 thighs, shins and feet), which imports into Blender and any tool that reads glTF or BVH.
@@ -135,6 +146,7 @@ The search endpoints leave out the adult categories unless `include_adult=true` 
   describe where each hand and leg is, read from the drawing; the camera line follows the chosen angle.
 - Search, sort and shuffle; every view is a shareable URL.
 - Favourites, recently viewed, saved rigs and boards for collecting one character's references.
+- My poses: new poses made in the 3D rig, drawn from five angles with depth maps.
 - Compare up to four items, full-screen zoom, and image adjustments (mirror, invert, contrast, tint).
 - Export and import your favourites, boards and saved rigs as JSON.
 - A switch to hide the adult categories (Glamour and Duo poses; Lingerie, Swimwear and Glamour costumes).

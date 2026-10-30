@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   if (!model) return refuse('Add the model name of the image service.');
   if (!RATIOS.has(aspectRatio)) return refuse('That aspect ratio is not supported.');
   if (!body.prompt?.trim() || body.prompt.length > 12000) return refuse('The prompt is empty or too long.');
-  if (photos.length > 3 || poses.length < 1 || poses.length > 6) return refuse('Use up to three model photos and one to six poses.');
+  if (photos.length > 3 || poses.length < 1 || poses.length > 12) return refuse('Use up to three model photos and one to six poses.');
   if (!poses.every(path => isMediaPath(path) || isRender(path)) || (body.costumeImage != null && !isMediaPath(body.costumeImage))) return refuse('Poses and costumes must come from this library.');
 
   const photoImages: ReferenceImage[] = [];

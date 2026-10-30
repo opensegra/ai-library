@@ -25,6 +25,7 @@ export interface StudioPose {
   uid: string;
   angle: string;
   image?: string;
+  depth?: string;
 }
 
 export interface StudioSelection {
@@ -46,6 +47,7 @@ export interface PromptPose {
   angle: string;
   people: number;
   arrangement: string | null;
+  hasDepth: boolean;
 }
 
 export interface PromptCostume {

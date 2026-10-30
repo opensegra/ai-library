@@ -312,6 +312,25 @@ function groundFigures(figs) {
   figs.forEach(f => { f.bones.root.position.y -= low; f.group.updateMatrixWorld(true); f.mesh.skeleton.update(); });
 }
 
+function stretchDepth(source, type) {
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width; canvas.height = source.height;
+  const context = canvas.getContext("2d");
+  context.drawImage(source, 0, 0);
+  const frame = context.getImageData(0, 0, canvas.width, canvas.height), px = frame.data;
+  const counts = new Array(256).fill(0);
+  let total = 0, low = 9, high = 255;
+  for (let i = 0; i < px.length; i += 4) if (px[i] > 8) { counts[px[i]]++; total++; }
+  for (let v = 9, seen = 0; v < 256; v++) { seen += counts[v]; if (seen > total * 0.03) { low = v; break; } }
+  for (let v = 255; v > low && !counts[v]; v--) high = v - 1;
+  const span = Math.max(1, high - low);
+  for (let i = 0; i < px.length; i += 4) {
+    const v = px[i] > 8 ? Math.round(40 + Math.min(1, Math.max(0, (px[i] - low) / span)) * 215) : 0;
+    px[i] = px[i + 1] = px[i + 2] = v;
+  }
+  context.putImageData(frame, 0, 0);
+  return canvas.toDataURL(type, 0.9);
+}
 function download(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -516,7 +535,7 @@ function varyRot(rot) {
 const SIZE_FIELDS = [["height", "Height", 0.8, 1.15], ["head", "Head size", 0.8, 1.25], ["shoulders", "Shoulder width", 0.85, 1.2], ["hips", "Hip width", 0.85, 1.3], ["torso", "Torso length", 0.88, 1.15], ["arms", "Arm length", 0.88, 1.15], ["legs", "Leg length", 0.88, 1.18], ["thickness", "Body thickness", 0.85, 1.25]];
 const POSABLE = ORDER.filter(n => CHILDREN[n] || n === "head");
 function showRig(ov, opts) {
-  const { code, title, imageURL, onSave, onRefit, onStudio } = opts;
+  const { code, title, imageURL, onSave, onRefit, onStudio, onCreate } = opts;
   let figures = opts.figures.map(f => ({ at: f.at ? f.at.slice() : [0, 0], rot: JSON.parse(JSON.stringify(f.rot || {})) }));
   ov.querySelector("h3").textContent = title;
   const ref = ov.querySelector(".r3-ref");
@@ -594,6 +613,22 @@ function showRig(ov, opts) {
     hidden.forEach(o => o.visible = true);
     renderer.render(scene, camera);
     renderer.autoClear = false; renderer.render(edgeScene, edgeCam); renderer.autoClear = true;
+  };
+  const depthMat = new THREE.MeshDepthMaterial({ side: THREE.DoubleSide });
+  const black = new THREE.Color(0x000000), viewPoint = new THREE.Vector3();
+  const drawDepth = () => {
+    const hidden = [grid, tc, ...helpers, ...handles.map(h => h.m), ...figs.flatMap(f => [f.lines, f.outline])].filter(o => o.visible);
+    const near = camera.near, far = camera.far, background = scene.background;
+    let closest = Infinity, furthest = 0;
+    camera.updateMatrixWorld();
+    figs.forEach(f => Object.values(f.bones).forEach(bone => { bone.getWorldPosition(viewPoint).applyMatrix4(camera.matrixWorldInverse); closest = Math.min(closest, -viewPoint.z); furthest = Math.max(furthest, -viewPoint.z); }));
+    hidden.forEach(o => o.visible = false);
+    if (Number.isFinite(closest)) { camera.near = Math.max(0.02, closest - 0.18); camera.far = furthest + 0.18; camera.updateProjectionMatrix(); }
+    scene.background = black; scene.overrideMaterial = depthMat;
+    renderer.render(scene, camera);
+    scene.overrideMaterial = null; scene.background = background;
+    camera.near = near; camera.far = far; camera.updateProjectionMatrix();
+    hidden.forEach(o => o.visible = true);
   };
   const handleGeo = new THREE.SphereGeometry(1, 16, 12);
   const handleMat = new THREE.MeshBasicMaterial({ color: 0x0a6cff, depthTest: false, transparent: true, opacity: 0.9 });
@@ -711,25 +746,66 @@ function showRig(ov, opts) {
     if (hit) select(handles.find(h => h.m === hit.object));
   });
   const tmp = new THREE.Vector3();
-  let alive = true;
+  let alive = true, depthOn = false;
   const loop = () => {
     if (!alive) return;
     controls.update();
     if (posing) handles.forEach(h => { figs[h.fi].bones[h.n].getWorldPosition(tmp); h.m.position.copy(tmp); });
-    if (look.edges && meshOn) drawEdges(); else renderer.render(scene, camera);
+    if (depthOn && meshOn) drawDepth(); else if (look.edges && meshOn) drawEdges(); else renderer.render(scene, camera);
     requestAnimationFrame(loop);
   };
   loop();
-  const snapshot = () => {
+  const snapshot = (kind, type = "image/jpeg") => {
     const hidden = [grid, tc, ...helpers, ...handles.map(h => h.m)].filter(o => o.visible);
     hidden.forEach(o => o.visible = false);
-    if (look.edges && meshOn) drawEdges(); else renderer.render(scene, camera);
-    const image = renderer.domElement.toDataURL("image/jpeg", 0.85);
+    if (kind === "depth") drawDepth(); else if (look.edges && meshOn) drawEdges(); else renderer.render(scene, camera);
+    const image = kind === "depth" ? stretchDepth(renderer.domElement, type) : renderer.domElement.toDataURL(type, 0.9);
     hidden.forEach(o => o.visible = true);
     return image;
   };
+  const renderSet = () => {
+    const width = 900, height = 1200, fill = 0.82;
+    const kept = { position: camera.position.clone(), target: controls.target.clone(), aspect: camera.aspect, background: scene.background.clone() };
+    const hidden = [grid, tc, ...helpers, ...handles.map(h => h.m)].filter(o => o.visible);
+    const drawing = looks("drawing");
+    const points = [];
+    figs.forEach(f => Object.entries(f.bones).forEach(([n, bone]) => {
+      if (opts.framing === "upper" && /^(kn|an)/.test(n)) return;
+      const point = bone.getWorldPosition(new THREE.Vector3());
+      points.push(point);
+      if (n === "head") points.push(point.clone().add(new THREE.Vector3(0, 0.2, 0)));
+    }));
+    const centre = new THREE.Box3().setFromPoints(points).getCenter(new THREE.Vector3()), projected = new THREE.Vector3();
+    hidden.forEach(o => o.visible = false);
+    figs.forEach(f => { f.mesh.material = drawing.body; f.lines.material = drawing.lines; f.outline.material = drawing.outline; f.mesh.visible = f.lines.visible = f.outline.visible = true; });
+    scene.background.set(drawing.background);
+    renderer.setPixelRatio(1); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
+    normalTarget.setSize(width, height); edgeMat.uniforms.texel.value.set(1 / width, 1 / height);
+    const views = images.filter(image => image.yaw != null).map(image => {
+      const yaw = image.yaw * DEG, pitch = (image.pitch || 0) * DEG, direction = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+      let distance = 4;
+      for (let pass = 0; pass < 3; pass++) {
+        camera.position.copy(centre).addScaledVector(direction, distance); camera.lookAt(centre); camera.updateMatrixWorld();
+        let reach = 0;
+        points.forEach(point => { projected.copy(point).project(camera); reach = Math.max(reach, Math.abs(projected.x), Math.abs(projected.y)); });
+        distance *= reach / fill;
+      }
+      camera.position.copy(centre).addScaledVector(direction, distance); camera.lookAt(centre); camera.updateMatrixWorld();
+      drawEdges();
+      const full = renderer.domElement.toDataURL("image/jpeg", 0.9);
+      drawDepth();
+      const depth = stretchDepth(renderer.domElement, "image/jpeg");
+      return { jp: image.jp, label: image.label, yaw: image.yaw, pitch: image.pitch || 0, full, depth };
+    });
+    figs.forEach(f => { f.mesh.material = look.body; f.lines.material = look.lines; f.outline.material = look.outline; f.mesh.visible = f.lines.visible = f.outline.visible = meshOn; });
+    scene.background.copy(kept.background);
+    hidden.forEach(o => o.visible = true);
+    camera.position.copy(kept.position); controls.target.copy(kept.target); camera.aspect = kept.aspect;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); resize(); controls.update();
+    return views;
+  };
   const tools = ov.querySelector(".r3-tools");
-  tools.innerHTML = `<button data-r3="look" data-look="drawing" aria-pressed="true">Drawing</button><button data-r3="look" data-look="clay" aria-pressed="false">Clay</button><button data-r3="mesh" aria-pressed="true">Mannequin</button><button data-r3="bones" aria-pressed="false">Bones</button><button data-r3="pose" aria-pressed="false">Pose</button><button data-r3="body" aria-pressed="false">Body</button>${images.length ? '<button data-r3="ref" aria-pressed="true">Side by side</button>' : ""}${onStudio ? '<button data-r3="studio">Use in studio</button>' : ""}<button data-r3="glb" class="pri">Download .glb</button><button data-r3="bvh">Download .bvh</button>`;
+  tools.innerHTML = `<button data-r3="look" data-look="drawing" aria-pressed="true">Drawing</button><button data-r3="look" data-look="clay" aria-pressed="false">Clay</button><button data-r3="depth" aria-pressed="false">Depth</button><button data-r3="mesh" aria-pressed="true">Mannequin</button><button data-r3="bones" aria-pressed="false">Bones</button><button data-r3="pose" aria-pressed="false">Pose</button><button data-r3="body" aria-pressed="false">Body</button>${images.length ? '<button data-r3="ref" aria-pressed="true">Side by side</button>' : ""}${onStudio ? '<button data-r3="studio">Use in studio</button>' : ""}${onCreate && images.some(image => image.yaw != null) ? '<button data-r3="create">Save as new pose</button>' : ""}<button data-r3="glb" class="pri">Download .glb</button><button data-r3="bvh">Download .bvh</button><button data-r3="depthpng">Depth .png</button>`;
   const name = (code || "pose").replace(/[^\w.-]+/g, "-");
   tools.onclick = e => {
     const b = e.target.closest("button"); if (!b) return;
@@ -740,7 +816,16 @@ function showRig(ov, opts) {
     if (a === "pose") { posing = toggle(); handles.forEach(h => h.m.visible = posing); if (!posing) select(null); renderPosePanel(); noteEl.textContent = posing ? "Pose mode: click a blue dot, then drag the rings. Orbit still works by dragging empty space." : baseNote; }
     if (a === "ref") { ref.hidden = !toggle(); resize(); }
     if (a === "body") { const on = toggle(); sideEl.hidden = !on; if (on) renderSidePanel(); }
-    if (a === "studio" && onStudio) { onStudio(snapshot()); b.textContent = "Sent to studio"; }
+    if (a === "create" && onCreate) {
+      b.disabled = true; b.textContent = "Rendering…";
+      setTimeout(() => {
+        onCreate(renderSet(), figures.map(f => ({ at: f.at.slice(), rot: JSON.parse(JSON.stringify(f.rot)) })));
+        b.disabled = false; b.textContent = "Saved as new pose";
+      }, 60);
+    }
+    if (a === "depth") depthOn = toggle();
+    if (a === "depthpng") void fetch(snapshot("depth", "image/png")).then(response => response.blob()).then(blob => download(blob, name + "-depth.png"));
+    if (a === "studio" && onStudio) { onStudio(snapshot("look"), snapshot("depth")); b.textContent = "Sent to studio"; }
     if (a === "glb") exportGLB(figs, name, buf => download(new Blob([buf], { type: "model/gltf-binary" }), name + ".glb"), scene);
     if (a === "bvh") figs.forEach((f, i) => { const rp = f.bones.root.position.clone().add(f.group.position); download(new Blob([bvhText({ rot: figures[i].rot, rootPosition: rp })], { type: "text/plain" }), name + (figs.length > 1 ? "-" + "AB"[i] : "") + ".bvh"); });
   };
@@ -750,13 +835,13 @@ function showRig(ov, opts) {
 
 export const RigViewer = {
   close() { close(); },
-  async open({ code, title, figures, source, onSave, onRefit, onStudio, images, imageIndex, onStep, position, framing, proportions }) {
+  async open({ code, title, figures, source, onSave, onRefit, onStudio, onCreate, images, imageIndex, onStep, position, framing, proportions }) {
     const ov = overlay(title);
     ov.querySelector(".r3-view").innerHTML = `<div class="r3-status" style="padding-top:120px">Preparing the mannequin…</div>`;
     await ensureBase();
     POSE_SIZING = drawingSizing(proportions);
     buildBase();
-    showRig(ov, { code, title: `${code} · ${title}`, figures, onSave, onRefit, onStudio, images, imageIndex, onStep, position, framing, note: source === "auto" ? "Rig fitted automatically from the drawing. Use Pose to adjust any joint, Body to resize the mannequin. Drag to orbit." : source === "approx" ? "Approximate fit: this drawing was hard to read automatically, so compare it side by side and correct the joints with Pose, then Save pose to library." : source === "stock" ? "This drawing could not be read automatically, so the mannequin starts in a standard pose. Use Pose to match it to the drawing, then Save pose to library." : null });
+    showRig(ov, { code, title: `${code} · ${title}`, figures, onSave, onRefit, onStudio, onCreate, images, imageIndex, onStep, position, framing, note: source === "auto" ? "Rig fitted automatically from the drawing. Use Pose to adjust any joint, Body to resize the mannequin. Drag to orbit." : source === "approx" ? "Approximate fit: this drawing was hard to read automatically, so compare it side by side and correct the joints with Pose, then Save pose to library." : source === "stock" ? "This drawing could not be read automatically, so the mannequin starts in a standard pose. Use Pose to match it to the drawing, then Save pose to library." : null });
   },
   fromImage() {
     const ov = overlay("Pose from your image");

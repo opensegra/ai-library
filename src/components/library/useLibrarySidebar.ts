@@ -6,6 +6,7 @@ import { useMemo, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 
 import { useLibrary } from '@/hooks/client/useLibrary';
+import { useMyPoses } from '@/hooks/client/useMyPoses';
 import { COLOURS, colourName } from '@/lib/catalogue/facets';
 import { groupBySlug, groupSlug } from '@/lib/catalogue/groupSlug';
 import { buildLibraryExport, isLibraryExport, mergeLibraryExport } from '@/lib/library/libraryExport';
@@ -16,7 +17,7 @@ export interface SidebarLink {
   label: string;
   count?: number;
   depth?: number;
-  icon?: 'pose' | 'costume' | 'star' | 'clock' | 'rig' | 'board' | 'image' | 'studio';
+  icon?: 'pose' | 'costume' | 'star' | 'clock' | 'rig' | 'board' | 'image' | 'studio' | 'mine';
   swatch?: string;
   active: boolean;
 }
@@ -39,6 +40,7 @@ const subscribeNothing = () => () => {};
 
 export function useLibrarySidebar() {
   const { catalogue, state, itemByUid, createBoard, update } = useLibrary();
+  const { poses: myPoses } = useMyPoses();
   const pathname = usePathname();
   const params = useSearchParams();
   const router = useRouter();
@@ -69,6 +71,7 @@ export function useLibrarySidebar() {
           poseLinks.push({ href: `/poses?line=${groupSlug(group)}&cls=${encodeURIComponent(name)}`, label: name, count, depth: 2, active: cls === name });
       }
     }
+    poseLinks.push({ href: '/my-poses', label: 'My poses', count: myPoses.length, icon: 'mine', active: pathname === '/my-poses' });
     poseLinks.push({ href: '/pose-from-image', label: 'Pose from your image', icon: 'image', active: pathname === '/pose-from-image' });
     poseLinks.push({ href: '/studio', label: 'Studio', icon: 'studio', active: pathname === '/studio' });
 
@@ -102,7 +105,7 @@ export function useLibrarySidebar() {
       { title: 'Collections', links: collectionLinks },
       { title: 'Boards', links: boardLinks, empty: boardLinks.length ? undefined : 'Collect poses and costumes for one character in a board.' }
     ];
-  }, [catalogue, state, pathname, line, cls, cat, colour]);
+  }, [catalogue, state, pathname, line, cls, cat, colour, myPoses.length]);
 
   const exportLibrary = () => {
     const blob = new Blob([JSON.stringify(buildLibraryExport(state), null, 2)], { type: 'application/json' });

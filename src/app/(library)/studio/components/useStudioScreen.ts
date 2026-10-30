@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import type { PickerKind } from '@/app/(library)/studio/components/usePickerDialog';
 import { useLibrary } from '@/hooks/client/useLibrary';
+import { useMyPoses } from '@/hooks/client/useMyPoses';
 import { useStudio } from '@/hooks/client/useStudio';
 import { angleName } from '@/lib/catalogue/angles';
 import { duoArrangement, isDuo } from '@/lib/catalogue/describePose';
@@ -29,6 +30,7 @@ export interface ChosenPose {
   pose: Pose;
   angle: string;
   image: string | undefined;
+  depth: string | undefined;
 }
 
 export interface TurnAttachment {
@@ -58,6 +60,7 @@ async function requestServer(result: StudioResult, signal: AbortSignal): Promise
 
 export function useStudioScreen() {
   const { itemByUid } = useLibrary();
+  const { byUid: myPoses } = useMyPoses();
   const studio = useStudio();
   const { selection, settings, patch } = studio;
   const [turns, setTurns] = useState<StudioTurn[]>([]);
@@ -67,7 +70,17 @@ export function useStudioScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [negativeOpen, setNegativeOpen] = useState(false);
   const controllers = useRef(new Set<AbortController>());
-  const poses = useMemo(() => selection.poses.map((entry: StudioPose) => ({ pose: itemByUid.get(entry.uid), angle: entry.angle, image: entry.image })).filter((entry): entry is ChosenPose => !!entry.pose && isPose(entry.pose)), [selection.poses, itemByUid]);
+  const poses = useMemo(
+    () =>
+      selection.poses
+        .map((entry: StudioPose) => {
+          const mine = myPoses.get(entry.uid);
+
+          return { pose: mine?.pose ?? itemByUid.get(entry.uid), angle: entry.angle, image: entry.image, depth: entry.depth ?? (entry.image ? undefined : mine?.saved.views.find(view => view.jp === entry.angle)?.depth) };
+        })
+        .filter((entry): entry is ChosenPose => !!entry.pose && isPose(entry.pose)),
+    [selection.poses, itemByUid, myPoses]
+  );
   const costumeItem = selection.costume ? itemByUid.get(selection.costume) : undefined;
   const costume = costumeItem && !isPose(costumeItem) ? (costumeItem as Costume) : null;
   const services = useMemo(() => settings.services.filter(service => settings.selected.includes(service.id) && isServiceReady(service)), [settings]);
@@ -77,9 +90,9 @@ export function useStudioScreen() {
   const buildJobs = (message: string) =>
     groups.map(group => ({
       label: group.map(entry => entry.pose.code).join(' + '),
-      poseImages: group.map(entry => entry.image ?? (entry.pose.images[entry.angle] ?? Object.values(entry.pose.images)[0]).full),
+      poseImages: [...group.map(entry => entry.image ?? (entry.pose.images[entry.angle] ?? Object.values(entry.pose.images)[0]).full), ...group.flatMap(entry => (entry.depth ? [entry.depth] : []))],
       prompt: composePrompt({
-        poses: group.map(entry => ({ code: entry.pose.code, name: entry.pose.name, group: entry.pose.lineName, angle: entry.image ? 'Rendered' : angleName(entry.angle), people: isDuo(entry.pose) ? 2 : 1, arrangement: duoArrangement(entry.pose) })),
+        poses: group.map(entry => ({ code: entry.pose.code, name: entry.pose.name, group: entry.pose.lineName, angle: entry.image ? 'Rendered' : angleName(entry.angle), people: isDuo(entry.pose) ? 2 : 1, arrangement: duoArrangement(entry.pose), hasDepth: !!entry.depth })),
         costume: costume ? { id: costume.id, words: costume.words } : null,
         modelPhotoCount: selection.modelPhotos.length,
         hasScene: !!selection.scenePhoto,
@@ -147,6 +160,7 @@ export function useStudioScreen() {
       photos: [...selection.modelPhotos, ...(selection.scenePhoto ? [selection.scenePhoto] : [])],
       attachments: [
         ...poses.map(({ pose, angle, image }) => ({ key: pose.uid, thumb: image ?? (pose.images[angle] ?? Object.values(pose.images)[0]).thumb, label: `${pose.code} · ${image ? '3D' : angleName(angle)}` })),
+        ...poses.flatMap(({ pose, depth }) => (depth ? [{ key: `${pose.uid}-depth`, thumb: depth, label: `${pose.code} · depth` }] : [])),
         ...(costume ? [{ key: costume.uid, thumb: costume.thumb, label: costume.id }] : [])
       ],
       details: [selection.aspectRatio, poses.length > 1 ? (selection.mode === 'sheet' ? 'one sheet' : 'one image each') : null].filter(Boolean).join(' · '),

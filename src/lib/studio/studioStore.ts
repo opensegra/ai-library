@@ -90,9 +90,9 @@ export function clearSettings() {
   notify();
 }
 
-export function sendPoseRender(uid: string, angle: string, image: string) {
+export function sendPoseRender(uid: string, angle: string, image: string, depth: string) {
   changeSelection(current => ({
     ...current,
-    poses: current.poses.some(pose => pose.uid === uid) ? current.poses.map(pose => (pose.uid === uid ? { uid, angle, image } : pose)) : [...current.poses, { uid, angle, image }].slice(-6)
+    poses: current.poses.some(pose => pose.uid === uid) ? current.poses.map(pose => (pose.uid === uid ? { uid, angle, image, depth } : pose)) : [...current.poses, { uid, angle, image, depth }].slice(-6)
   }));
 }

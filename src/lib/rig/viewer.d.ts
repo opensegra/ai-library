@@ -19,9 +19,19 @@ export interface RigOpenOptions {
   framing: 'upper' | 'full';
   proportions: Record<string, number | null> | null;
   onStep: ((direction: number, imageJp: string) => void) | null;
-  onSave: (figures: FigurePlacement[]) => void;
-  onRefit: () => FigurePlacement[] | null;
-  onStudio?: (image: string) => void;
+  onSave?: (figures: FigurePlacement[]) => void;
+  onRefit?: () => FigurePlacement[] | null;
+  onStudio?: (image: string, depth: string) => void;
+  onCreate?: (views: RigView[], figures: FigurePlacement[]) => void;
+}
+
+export interface RigView {
+  jp: string;
+  label: string;
+  yaw: number;
+  pitch: number;
+  full: string;
+  depth: string;
 }
 
 export const RigViewer: {
