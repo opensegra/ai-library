@@ -8,13 +8,14 @@ import { toast } from 'sonner';
 import { useLibrary } from '@/hooks/client/useLibrary';
 import { COLOURS, colourName } from '@/lib/catalogue/facets';
 import { buildLibraryExport, isLibraryExport, mergeLibraryExport } from '@/lib/library/libraryExport';
+import { ADULT_COSTUME_CATEGORIES, ADULT_POSE_LINES, isAdultCostume, isAdultPose } from '@/lib/studio/adultContent';
 
 export interface SidebarLink {
   href: string;
   label: string;
   count?: number;
   depth?: number;
-  icon?: 'pose' | 'costume' | 'star' | 'clock' | 'rig' | 'board' | 'image';
+  icon?: 'pose' | 'costume' | 'star' | 'clock' | 'rig' | 'board' | 'image' | 'studio';
   swatch?: string;
   active: boolean;
 }
@@ -49,14 +50,16 @@ export function useLibrarySidebar() {
   const colour = params.get('colour');
 
   const sections = useMemo<SidebarSection[]>(() => {
-    const poseCounts = countBy(catalogue.poses, pose => pose.line);
-    const costumeCounts = countBy(catalogue.costumes, costume => costume.cat);
-    const colourCounts = countBy(catalogue.costumes.flatMap(costume => costume.words.filter(word => word in COLOURS)), word => word);
+    const visiblePoses = catalogue.poses.filter(pose => state.showAdult || !isAdultPose(pose));
+    const visibleCostumes = catalogue.costumes.filter(costume => state.showAdult || !isAdultCostume(costume));
+    const poseCounts = countBy(visiblePoses, pose => pose.line);
+    const costumeCounts = countBy(visibleCostumes, costume => costume.cat);
+    const colourCounts = countBy(visibleCostumes.flatMap(costume => costume.words.filter(word => word in COLOURS)), word => word);
     const onPoses = pathname === '/poses';
     const onCostumes = pathname === '/costumes';
-    const poseLinks: SidebarLink[] = [{ href: '/poses', label: 'All poses', count: catalogue.poses.length, icon: 'pose', active: onPoses && !line }];
+    const poseLinks: SidebarLink[] = [{ href: '/poses', label: 'All poses', count: visiblePoses.length, icon: 'pose', active: onPoses && !line }];
 
-    for (const group of catalogue.lines) {
+    for (const group of catalogue.lines.filter(entry => state.showAdult || !ADULT_POSE_LINES.has(entry.key))) {
       poseLinks.push({ href: `/poses?line=${encodeURIComponent(group.key)}`, label: group.name, count: poseCounts[group.key], depth: 1, active: onPoses && line === group.key && !cls });
       if (onPoses && line === group.key) {
         const classes = countBy(catalogue.poses.filter(pose => pose.line === group.key), pose => pose.cls);
@@ -66,10 +69,11 @@ export function useLibrarySidebar() {
       }
     }
     poseLinks.push({ href: '/pose-from-image', label: 'Pose from your image', icon: 'image', active: pathname === '/pose-from-image' });
+    poseLinks.push({ href: '/studio', label: 'Studio', icon: 'studio', active: pathname === '/studio' });
 
-    const costumeLinks: SidebarLink[] = [{ href: '/costumes', label: 'All costumes', count: catalogue.costumes.length, icon: 'costume', active: onCostumes && !cat && !colour }];
+    const costumeLinks: SidebarLink[] = [{ href: '/costumes', label: 'All costumes', count: visibleCostumes.length, icon: 'costume', active: onCostumes && !cat && !colour }];
 
-    for (const group of catalogue.categories)
+    for (const group of catalogue.categories.filter(entry => state.showAdult || !ADULT_COSTUME_CATEGORIES.has(entry.key)))
       costumeLinks.push({ href: `/costumes?cat=${encodeURIComponent(group.key)}`, label: group.name, count: costumeCounts[group.key], depth: 1, active: onCostumes && cat === group.key });
 
     const colourLinks: SidebarLink[] = Object.entries(COLOURS)
@@ -148,6 +152,8 @@ export function useLibrarySidebar() {
     exportLibrary,
     importLibrary,
     theme: mounted ? resolvedTheme : undefined,
+    showAdult: state.showAdult,
+    setShowAdult: (showAdult: boolean) => update(current => ({ ...current, showAdult })),
     toggleTheme: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   };
 }

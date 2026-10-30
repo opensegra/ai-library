@@ -6,15 +6,19 @@ import { useBrowserQuery } from '@/hooks/client/useBrowserQuery';
 import { useLibrary } from '@/hooks/client/useLibrary';
 import { colourName } from '@/lib/catalogue/facets';
 import { filterCostumes } from '@/lib/catalogue/filterItems';
+import { isAdultCostume } from '@/lib/studio/adultContent';
 
 export function useCostumesScreen() {
-  const { catalogue } = useLibrary();
+  const { catalogue, state } = useLibrary();
   const { read, readList, write } = useBrowserQuery();
   const cat = read('cat');
   const colour = read('colour');
   const wordsKey = read('words') ?? '';
   const words = useMemo(() => wordsKey.split(',').filter(Boolean), [wordsKey]);
-  const costumes = useMemo(() => filterCostumes(catalogue.costumes, { cat, colour, words }), [catalogue.costumes, cat, colour, words]);
+  const costumes = useMemo(
+    () => filterCostumes(catalogue.costumes, { cat, colour, words }).filter(costume => state.showAdult || !isAdultCostume(costume)),
+    [catalogue.costumes, cat, colour, words, state.showAdult]
+  );
   const facetCounts = useMemo(() => {
     const counts: Record<string, number> = {};
 

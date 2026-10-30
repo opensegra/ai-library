@@ -1,6 +1,6 @@
 'use client';
 
-import { DownloadIcon, Maximize2Icon, StarIcon } from 'lucide-react';
+import { DownloadIcon, Maximize2Icon, SparklesIcon, StarIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { BoardMenu } from '@/components/library/BoardMenu';
@@ -16,7 +16,7 @@ interface CostumeInspectorProps {
 }
 
 export function CostumeInspector({ costume, onZoom, onSelect }: CostumeInspectorProps) {
-  const { favourite, toggleFavourite, similar } = useCostumeInspector(costume);
+  const { favourite, toggleFavourite, similar, inStudio, toggleStudio } = useCostumeInspector(costume);
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,6 +41,10 @@ export function CostumeInspector({ costume, onZoom, onSelect }: CostumeInspector
           {favourite ? 'Favourite' : 'Add to favourites'}
         </Button>
         <BoardMenu uid={costume.uid} />
+        <Button variant="outline" size="sm" onClick={toggleStudio}>
+          <SparklesIcon />
+          {inStudio ? 'In studio' : 'Use in studio'}
+        </Button>
         <Button variant="outline" size="sm" onClick={onZoom}>
           <Maximize2Icon />
           Full screen

@@ -80,6 +80,34 @@ It returns the bone rotations, the camera angle of each drawing and the measured
 **Pose from your image** puts the pose from any photo or drawing onto the mannequin. The image is
 read in the browser and never uploaded.
 
+## Studio
+
+The studio puts your own model into any pose and costume with an image-generation model.
+
+1. Add up to three photos of the person to draw, and optionally describe them.
+2. Choose up to six poses and, optionally, one costume. Any pose or costume can also be sent here
+   with **Add to studio** from its detail panel.
+3. Under **Image settings**, pick Google Gemini, an OpenAI-compatible service or Seedream, and paste
+   your API key. The key is kept in your browser and sent only with each generate request.
+4. Choose **Generate**. Each pose becomes its own image, or all of them share one sheet.
+
+Without a key, **Copy prompt** gives you the full prompt to use in any other image tool, with the
+model photos, the costume image and the pose drawing as references in that order.
+
+To use a key held on the server instead, set `IMAGE_API_KEY` (and optionally `IMAGE_PROVIDER`,
+`IMAGE_BASE_URL`) in the environment.
+
+## API
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/poses?q=&group=&limit=` | poses with their five images and a link to their rig |
+| `GET /api/costumes?q=&category=&colour=&limit=` | costumes with their keywords and images |
+| `GET /api/fits/:code` | the fitted rig for one pose |
+| `POST /api/generate` | one generated image, used by the studio |
+
+The search endpoints leave out the adult categories unless `include_adult=true` is passed.
+
 ## Features
 
 - Filter poses by group and class, and costumes by category, colour and keyword.
@@ -87,6 +115,7 @@ read in the browser and never uploaded.
 - Favourites, recently viewed, saved rigs and boards for collecting one character's references.
 - Compare up to four items, full-screen zoom, and image adjustments (mirror, invert, contrast, tint).
 - Export and import your favourites, boards and saved rigs as JSON.
+- A switch to hide the adult categories (Glamour and Duo poses; Lingerie, Swimwear and Glamour costumes).
 - Dark and light themes; works on phones, tablets and desktops.
 
 ## Project structure
@@ -96,8 +125,8 @@ data/                      pose and costume catalogue, and the joint data the ri
 docs/screenshots/          the screenshots in this README
 public/media/              pose and costume images
 public/assets/             the base mannequin body (glTF)
-src/app/(library)/         poses, costumes, collections, boards and pose-from-image screens
-src/app/api/fits/          fits the rig for one pose
+src/app/(library)/         poses, costumes, collections, boards, pose-from-image and studio screens
+src/app/api/               rig fitting, search and image generation
 src/components/library/    shell, sidebar, grid, inspector and dialogs
 src/components/ui/         shadcn/ui primitives
 src/hooks/client/          library state, URL state and the 3D viewer launcher

@@ -1,6 +1,6 @@
 'use client';
 
-import { BoxesIcon, DownloadIcon, Maximize2Icon, StarIcon } from 'lucide-react';
+import { BoxesIcon, DownloadIcon, Maximize2Icon, SparklesIcon, StarIcon } from 'lucide-react';
 
 import { BoardMenu } from '@/components/library/BoardMenu';
 import { usePoseInspector } from '@/components/library/usePoseInspector';
@@ -18,7 +18,7 @@ interface PoseInspectorProps {
 }
 
 export function PoseInspector({ pose, list, angle, onAngle, onZoom }: PoseInspectorProps) {
-  const { image, favourite, toggleFavourite, openRig, opening, saved } = usePoseInspector(pose, list, angle);
+  const { image, favourite, toggleFavourite, openRig, opening, saved, inStudio, toggleStudio } = usePoseInspector(pose, list, angle);
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,6 +55,10 @@ export function PoseInspector({ pose, list, angle, onAngle, onZoom }: PoseInspec
           {favourite ? 'Favourite' : 'Add to favourites'}
         </Button>
         <BoardMenu uid={pose.uid} />
+        <Button variant="outline" size="sm" onClick={toggleStudio}>
+          <SparklesIcon />
+          {inStudio ? 'In studio' : 'Add to studio'}
+        </Button>
         <Button variant="outline" size="sm" onClick={onZoom}>
           <Maximize2Icon />
           Full screen

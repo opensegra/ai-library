@@ -22,6 +22,7 @@ export interface LibraryState {
   rigs: Record<string, SavedRig>;
   cellSize: number;
   adjustments: ImageAdjustments;
+  showAdult: boolean;
 }
 
 export const STORAGE_KEY = 'ai-library.v1';
@@ -32,7 +33,8 @@ export const EMPTY_LIBRARY: LibraryState = {
   boards: {},
   rigs: {},
   cellSize: 168,
-  adjustments: { flip: false, invert: false, contrast: 1, tint: 0 }
+  adjustments: { flip: false, invert: false, contrast: 1, tint: 0 },
+  showAdult: true
 };
 
 export function readLibraryState(): LibraryState {

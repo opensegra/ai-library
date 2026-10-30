@@ -1,11 +1,12 @@
 'use client';
 
-import { BoxesIcon, ClockIcon, DownloadIcon, ImageUpIcon, LayoutGridIcon, MoonIcon, PersonStandingIcon, PlusIcon, ShirtIcon, StarIcon, SunIcon, UploadIcon } from 'lucide-react';
+import { BoxesIcon, ClockIcon, DownloadIcon, ImageUpIcon, LayoutGridIcon, MoonIcon, PersonStandingIcon, PlusIcon, ShirtIcon, SparklesIcon, StarIcon, SunIcon, UploadIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { NewBoardDialog } from '@/components/library/NewBoardDialog';
 import { type SidebarLink, useLibrarySidebar } from '@/components/library/useLibrarySidebar';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface LibrarySidebarProps {
@@ -17,7 +18,7 @@ interface SidebarRowProps {
   onNavigate?: () => void;
 }
 
-const ICONS = { pose: PersonStandingIcon, costume: ShirtIcon, star: StarIcon, clock: ClockIcon, rig: BoxesIcon, board: LayoutGridIcon, image: ImageUpIcon };
+const ICONS = { pose: PersonStandingIcon, costume: ShirtIcon, star: StarIcon, clock: ClockIcon, rig: BoxesIcon, board: LayoutGridIcon, image: ImageUpIcon, studio: SparklesIcon };
 
 function SidebarRow({ link, onNavigate }: SidebarRowProps) {
   const Icon = link.icon ? ICONS[link.icon] : null;
@@ -43,7 +44,7 @@ function SidebarRow({ link, onNavigate }: SidebarRowProps) {
 }
 
 export function LibrarySidebar({ onNavigate }: LibrarySidebarProps) {
-  const { sections, boardDialogOpen, setBoardDialogOpen, createBoard, exportLibrary, importLibrary, theme, toggleTheme } = useLibrarySidebar();
+  const { sections, boardDialogOpen, setBoardDialogOpen, createBoard, exportLibrary, importLibrary, theme, toggleTheme, showAdult, setShowAdult } = useLibrarySidebar();
 
   return (
     <nav aria-label="Library" className="flex h-full flex-col">
@@ -69,6 +70,10 @@ export function LibrarySidebar({ onNavigate }: LibrarySidebarProps) {
           </div>
         ))}
       </div>
+      <label className="flex items-center justify-between gap-2 border-t px-4 py-2.5 text-xs text-muted-foreground">
+        Show adult categories
+        <Switch checked={showAdult} onCheckedChange={setShowAdult} aria-label="Show adult categories" />
+      </label>
       <div className="flex items-center gap-1 border-t p-2">
         <Button variant="ghost" size="sm" onClick={exportLibrary}>
           <DownloadIcon />
