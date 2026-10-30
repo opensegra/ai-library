@@ -122,7 +122,10 @@ export function StudioScreen() {
         onOpenChange={open => !open && studio.setPicker(null)}
         selectedPoses={studio.poses.map(entry => entry.pose.uid)}
         selectedCostume={studio.costume?.uid ?? null}
-        onPickPose={uid => studio.addPose(uid, ANGLES[0].jp)}
+        onPickPose={uid => {
+          studio.addPose(uid, ANGLES[0].jp);
+          studio.setPicker(null);
+        }}
         onPickCostume={uid => {
           studio.setCostume(uid);
           studio.setPicker(null);

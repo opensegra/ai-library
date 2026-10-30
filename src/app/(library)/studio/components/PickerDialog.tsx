@@ -24,7 +24,7 @@ export function PickerDialog({ kind, onOpenChange, selectedPoses, selectedCostum
     <Dialog open={!!kind} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[88dvh] flex-col sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{kind === 'poses' ? 'Add poses' : 'Pick a costume'}</DialogTitle>
+          <DialogTitle>{kind === 'poses' ? 'Add a pose' : 'Pick a costume'}</DialogTitle>
         </DialogHeader>
         <Input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder={kind === 'poses' ? 'Search name or ID' : 'Search words or ID'} aria-label="Search" />
         <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
