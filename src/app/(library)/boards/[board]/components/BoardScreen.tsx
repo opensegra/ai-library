@@ -10,5 +10,12 @@ interface BoardScreenProps {
 export function BoardScreen({ board }: BoardScreenProps) {
   const { items, showsPoses, exists } = useBoardScreen(board);
 
-  return <ItemBrowser title={board} items={items} showsPoses={showsPoses} emptyText={exists ? 'Use Add to board on any pose or costume to collect it here.' : 'This board does not exist in this browser.'} />;
+  return (
+    <ItemBrowser
+      title={board}
+      items={items}
+      showsPoses={showsPoses}
+      emptyText={exists ? 'Use Add to board on any pose or costume to collect it here.' : 'This board does not exist in this browser.'}
+    />
+  );
 }

@@ -5,11 +5,11 @@ import type { CollectionKind } from '@/app/(library)/collections/[collection]/co
 import { ItemBrowser } from '@/components/library/ItemBrowser';
 
 interface CollectionScreenProps {
-  kind: CollectionKind;
+    kind: CollectionKind;
 }
 
 export function CollectionScreen({ kind }: CollectionScreenProps) {
-  const { title, items, empty, showsPoses } = useCollectionScreen(kind);
+    const { title, items, empty, showsPoses } = useCollectionScreen(kind);
 
-  return <ItemBrowser title={title} items={items} showsPoses={showsPoses} emptyText={empty} />;
+    return <ItemBrowser title={title} items={items} showsPoses={showsPoses} emptyText={empty} />;
 }

@@ -1,0 +1,20 @@
+# Kept in step with `.prettierrc` and `.vscode/settings.json` on purpose: three files describe the
+# same formatting, and an editor that trusts one while the formatter trusts another produces a diff
+# on every save. Prettier is the authority — anything it decides is not repeated here.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+tab_width = unset
+trim_trailing_whitespace = true
+# Prettier always writes one, and used to say so where this file said the opposite.
+insert_final_newline = true
+# `printWidth` in .prettierrc. Here only so an editor's ruler agrees with the wrap.
+max_line_length = 140
+
+[*.md]
+# A trailing double space is a hard line break in Markdown, and trimming it silently rewrites text.
+trim_trailing_whitespace = false

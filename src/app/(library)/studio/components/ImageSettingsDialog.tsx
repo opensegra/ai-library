@@ -1,7 +1,5 @@
 'use client';
 
-import { ExternalLinkIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-
 import { DriveSettings } from '@/app/(library)/studio/components/DriveSettings';
 import { ModelField } from '@/app/(library)/studio/components/ModelField';
 import { PuterAccount } from '@/app/(library)/studio/components/PuterAccount';
@@ -15,126 +13,173 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CLOUDFLARE_COSTS, needsKey, presetFor, SERVICE_PRESETS } from '@/lib/studio/servicePresets';
 import type { ServicePresetId, StudioSettings } from '@/lib/studio/types';
+import { ExternalLinkIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 
 interface ImageSettingsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  settings: StudioSettings;
-  onSave: (settings: StudioSettings) => void;
-  onClear: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    settings: StudioSettings;
+    onSave: (settings: StudioSettings) => void;
+    onClear: () => void;
 }
 
 export function ImageSettingsDialog({ open, onOpenChange, settings, onSave, onClear }: ImageSettingsDialogProps) {
-  const { draft, add, remove, update, choosePreset, toggle, finished } = useImageSettingsDialog(open, settings);
+    const { draft, add, remove, update, choosePreset, toggle, finished } = useImageSettingsDialog(open, settings);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Image settings</DialogTitle>
-          <DialogDescription>
-            Add one or more image services. Ticked services are all used, so each pose is generated once per service. Keys stay in this browser and are only sent with a generate request. Puter needs no key: you sign in with your own Puter
-            account instead.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1">
-          {draft.services.map(service => {
-            const preset = presetFor(service.preset);
-            const keyed = needsKey(service.preset);
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Image settings</DialogTitle>
+                    <DialogDescription>
+                        Add one or more image services. Ticked services are all used, so each pose is generated once per service. Keys stay
+                        in this browser and are only sent with a generate request. Puter needs no key: you sign in with your own Puter
+                        account instead.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1">
+                    {draft.services.map((service) => {
+                        const preset = presetFor(service.preset);
+                        const keyed = needsKey(service.preset);
 
-            return (
-              <div key={service.id} className="grid gap-2.5 rounded-lg border p-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={draft.selected.includes(service.id)} onCheckedChange={() => toggle(service.id)} aria-label={`Use ${preset.label}`} />
-                  <Select value={service.preset} onValueChange={value => choosePreset(service.id, value as ServicePresetId)}>
-                    <SelectTrigger size="sm" className="min-w-0 flex-1">
-                      <SelectValue>{preset.label}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SERVICE_PRESETS.map(option => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Remove ${preset.label}`} onClick={() => remove(service.id)}>
-                    <Trash2Icon />
-                  </Button>
+                        return (
+                            <div key={service.id} className="grid gap-2.5 rounded-lg border p-3">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked={draft.selected.includes(service.id)}
+                                        onCheckedChange={() => toggle(service.id)}
+                                        aria-label={`Use ${preset.label}`}
+                                    />
+                                    <Select
+                                        value={service.preset}
+                                        onValueChange={(value) => choosePreset(service.id, value as ServicePresetId)}
+                                    >
+                                        <SelectTrigger size="sm" className="min-w-0 flex-1">
+                                            <SelectValue>{preset.label}</SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {SERVICE_PRESETS.map((option) => (
+                                                <SelectItem key={option.id} value={option.id}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label={`Remove ${preset.label}`}
+                                        onClick={() => remove(service.id)}
+                                    >
+                                        <Trash2Icon />
+                                    </Button>
+                                </div>
+                                {keyed ? (
+                                    <div className="grid gap-1">
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor={`${service.id}-key`}>{preset.needsAccount ? 'API token' : 'API key'}</Label>
+                                            {preset.keyPage ? (
+                                                <a
+                                                    href={preset.keyPage}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                                                >
+                                                    {preset.needsAccount ? 'Create a token' : 'Get a key'}
+                                                    <ExternalLinkIcon className="size-3" />
+                                                </a>
+                                            ) : null}
+                                        </div>
+                                        <Input
+                                            id={`${service.id}-key`}
+                                            type="password"
+                                            autoComplete="off"
+                                            value={service.apiKey}
+                                            onChange={(event) => update(service.id, { apiKey: event.target.value })}
+                                        />
+                                    </div>
+                                ) : (
+                                    <PuterAccount />
+                                )}
+                                <div className={keyed ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2'}>
+                                    <ModelField
+                                        id={`${service.id}-model`}
+                                        models={preset.models}
+                                        value={service.model}
+                                        onChange={(model) => update(service.id, { model })}
+                                    />
+                                    {preset.needsAccount ? (
+                                        <div className="grid gap-1">
+                                            <Label htmlFor={`${service.id}-account`}>Account ID</Label>
+                                            <Input
+                                                id={`${service.id}-account`}
+                                                value={service.accountId ?? ''}
+                                                onChange={(event) => update(service.id, { accountId: event.target.value.trim() })}
+                                                placeholder="32 characters"
+                                                autoComplete="off"
+                                            />
+                                        </div>
+                                    ) : keyed ? (
+                                        <div className="grid gap-1">
+                                            <Label htmlFor={`${service.id}-url`}>Base URL</Label>
+                                            <Input
+                                                id={`${service.id}-url`}
+                                                value={service.baseURL}
+                                                onChange={(event) => update(service.id, { baseURL: event.target.value })}
+                                                placeholder="https://…/v1"
+                                            />
+                                        </div>
+                                    ) : null}
+                                </div>
+                                {preset.needsAccount ? (
+                                    <p className="text-xs text-muted-foreground">
+                                        The account ID is on the Workers AI page of the Cloudflare dashboard. Use a token with Workers AI
+                                        permission. Usage is billed to that Cloudflare account, with a free daily allowance. Up to{' '}
+                                        {preset.maxReferences} reference images are sent, each shrunk to fit {preset.maxReferenceSide! + 1}{' '}
+                                        px.
+                                        {CLOUDFLARE_COSTS[service.model]
+                                            ? ` This model costs ${CLOUDFLARE_COSTS[service.model]} (10,000 Neurons, resetting at 00:00 UTC).`
+                                            : ''}
+                                    </p>
+                                ) : null}
+                            </div>
+                        );
+                    })}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button variant="outline" className="self-start" />}>
+                            <PlusIcon />
+                            Add a service
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-64">
+                            {SERVICE_PRESETS.map((option) => (
+                                <DropdownMenuItem key={option.id} onClick={() => add(option.id)}>
+                                    {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DriveSettings />
                 </div>
-                {keyed ? (
-                  <div className="grid gap-1">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`${service.id}-key`}>{preset.needsAccount ? 'API token' : 'API key'}</Label>
-                      {preset.keyPage ? (
-                        <a href={preset.keyPage} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          {preset.needsAccount ? 'Create a token' : 'Get a key'}
-                          <ExternalLinkIcon className="size-3" />
-                        </a>
-                      ) : null}
-                    </div>
-                    <Input id={`${service.id}-key`} type="password" autoComplete="off" value={service.apiKey} onChange={event => update(service.id, { apiKey: event.target.value })} />
-                  </div>
-                ) : (
-                  <PuterAccount />
-                )}
-                <div className={keyed ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2'}>
-                  <ModelField id={`${service.id}-model`} models={preset.models} value={service.model} onChange={model => update(service.id, { model })} />
-                  {preset.needsAccount ? (
-                    <div className="grid gap-1">
-                      <Label htmlFor={`${service.id}-account`}>Account ID</Label>
-                      <Input id={`${service.id}-account`} value={service.accountId ?? ''} onChange={event => update(service.id, { accountId: event.target.value.trim() })} placeholder="32 characters" autoComplete="off" />
-                    </div>
-                  ) : keyed ? (
-                    <div className="grid gap-1">
-                      <Label htmlFor={`${service.id}-url`}>Base URL</Label>
-                      <Input id={`${service.id}-url`} value={service.baseURL} onChange={event => update(service.id, { baseURL: event.target.value })} placeholder="https://…/v1" />
-                    </div>
-                  ) : null}
-                </div>
-                {preset.needsAccount ? (
-                  <p className="text-xs text-muted-foreground">
-                    The account ID is on the Workers AI page of the Cloudflare dashboard. Use a token with Workers AI permission. Usage is billed to that Cloudflare account, with a free daily allowance. Up to {preset.maxReferences} reference images are sent, each shrunk to fit {preset.maxReferenceSide! + 1} px.{CLOUDFLARE_COSTS[service.model] ? ` This model costs ${CLOUDFLARE_COSTS[service.model]} (10,000 Neurons, resetting at 00:00 UTC).` : ''}
-                  </p>
-                ) : null}
-              </div>
-            );
-          })}
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" className="self-start" />}>
-              <PlusIcon />
-              Add a service
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64">
-              {SERVICE_PRESETS.map(option => (
-                <DropdownMenuItem key={option.id} onClick={() => add(option.id)}>
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DriveSettings />
-        </div>
-        <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              onClear();
-              onOpenChange(false);
-            }}
-          >
-            Remove all services
-          </Button>
-          <Button
-            onClick={() => {
-              onSave(finished());
-              onOpenChange(false);
-            }}
-          >
-            Save
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+                <DialogFooter>
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            onClear();
+                            onOpenChange(false);
+                        }}
+                    >
+                        Remove all services
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            onSave(finished());
+                            onOpenChange(false);
+                        }}
+                    >
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }

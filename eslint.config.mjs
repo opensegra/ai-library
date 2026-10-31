@@ -8,7 +8,10 @@ const eslintConfig = defineConfig([
   {
     rules: {
       '@next/next/no-img-element': 'off',
-      'no-restricted-imports': ['error', { patterns: [{ group: ['../*'], message: 'Import through @/ instead of a relative parent path.' }] }]
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['../*'], message: 'Import through @/ instead of a relative parent path.' }] }
+      ]
     }
   },
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'src/lib/rig/*.js', 'src/lib/fitting/*.js'])

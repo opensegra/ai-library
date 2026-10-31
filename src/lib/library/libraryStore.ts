@@ -4,27 +4,27 @@ let current: LibraryState | null = null;
 const listeners = new Set<() => void>();
 
 export function subscribeLibrary(listener: () => void): () => void {
-  listeners.add(listener);
+    listeners.add(listener);
 
-  return () => listeners.delete(listener);
+    return () => listeners.delete(listener);
 }
 
 export function librarySnapshot(): LibraryState {
-  current ??= readLibraryState();
+    current ??= readLibraryState();
 
-  return current;
+    return current;
 }
 
 export function serverLibrarySnapshot(): LibraryState {
-  return EMPTY_LIBRARY;
+    return EMPTY_LIBRARY;
 }
 
 export function changeLibrary(change: (state: LibraryState) => LibraryState): boolean {
-  current = change(librarySnapshot());
+    current = change(librarySnapshot());
 
-  const saved = writeLibraryState(current);
+    const saved = writeLibraryState(current);
 
-  for (const listener of listeners) listener();
+    for (const listener of listeners) listener();
 
-  return saved;
+    return saved;
 }

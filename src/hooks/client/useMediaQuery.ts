@@ -3,17 +3,17 @@
 import { useEffect, useState } from 'react';
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+    const [matches, setMatches] = useState(false);
 
-  useEffect(() => {
-    const list = window.matchMedia(query);
-    const sync = () => setMatches(list.matches);
+    useEffect(() => {
+        const list = window.matchMedia(query);
+        const sync = () => setMatches(list.matches);
 
-    sync();
-    list.addEventListener('change', sync);
+        sync();
+        list.addEventListener('change', sync);
 
-    return () => list.removeEventListener('change', sync);
-  }, [query]);
+        return () => list.removeEventListener('change', sync);
+    }, [query]);
 
-  return matches;
+    return matches;
 }
