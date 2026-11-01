@@ -43,10 +43,12 @@ export function composePrompt({ poses, costume, modelPhotoCount, hasScene, descr
         );
         next += 1;
     }
-    roles.push(
-        `* ${images(next, poses.length)} – Pose and body positioning: Follow the mannequin's pose, including limb placement, body orientation, posture, and camera-facing direction.`
-    );
-    next += poses.length;
+    if (poses.length) {
+        roles.push(
+            `* ${images(next, poses.length)} – Pose and body positioning: Follow the mannequin's pose, including limb placement, body orientation, posture, and camera-facing direction.`
+        );
+        next += poses.length;
+    }
     poses.forEach((pose, index) => {
         if (!pose.hasDepth) return;
         roles.push(
@@ -64,11 +66,13 @@ export function composePrompt({ poses, costume, modelPhotoCount, hasScene, descr
         ...roles,
         '',
         'Subject and composition:',
-        `${subject} Preserve the reference pose and anatomical proportions while making the posture look natural and physically plausible.`
+        poses.length
+            ? `${subject} Preserve the reference pose and anatomical proportions while making the posture look natural and physically plausible.`
+            : `${subject} Use a natural, physically plausible pose with realistic anatomical proportions.`
     ];
 
     if (description.trim()) lines.push(`The model: ${description.trim()}`);
-    lines.push(sheet ? 'Show every pose below in one image, one pose per panel, with space between panels:' : 'The pose:');
+    if (poses.length) lines.push(sheet ? 'Show every pose below in one image, one pose per panel, with space between panels:' : 'The pose:');
     poses.forEach((pose, index) => {
         lines.push(
             `${index + 1}. ${pose.name} (${pose.code}, ${pose.group}), ${CAMERA[pose.angle] ? `${pose.angle.toLowerCase()} – ${CAMERA[pose.angle]}` : 'camera angle as in the 3D mannequin render'}.`
@@ -97,8 +101,8 @@ export function composePrompt({ poses, costume, modelPhotoCount, hasScene, descr
         'Important constraints:',
         "* Preserve the identity of each reference image's intended role.",
         costume ? '* Do not redesign or substitute the outfit.' : '* Do not copy the bare mannequin body from the pose drawing.',
-        '* Do not unnecessarily alter the pose.',
-        '* Never draw the sketch lines, joint circles or proportion guides from the pose drawing, and never show the grey depth map itself.',
+        ...(poses.length ? ['* Do not unnecessarily alter the pose.'] : []),
+        ...(poses.length ? ['* Never draw the sketch lines, joint circles or proportion guides from the pose drawing, and never show the grey depth map itself.'] : []),
         '* Avoid distorted hands, feet, fingers, limbs, or facial features.',
         '* Avoid artificial-looking skin, excessive retouching, or CGI aesthetics.',
         '* Maintain realistic garment fitting and natural fabric folds.',

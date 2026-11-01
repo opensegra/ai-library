@@ -106,7 +106,8 @@ export async function POST(request: Request) {
         return refuse('Cloudflare model names look like @cf/black-forest-labs/flux-2-klein-4b.');
     if (!RATIOS.has(aspectRatio)) return refuse('That aspect ratio is not supported.');
     if (!body.prompt?.trim() || body.prompt.length > 12000) return refuse('The prompt is empty or too long.');
-    if (photos.length > 3 || poses.length < 1 || poses.length > 12) return refuse('Use up to three model photos and one to six poses.');
+    if (photos.length < 1 || photos.length > 3 || poses.length > 12)
+        return refuse('Add one to three model photos and use up to six poses.');
     if (
         !poses.every((path) => isMediaPath(path) || isRender(path)) ||
         (body.costumeImage != null && !isMediaPath(body.costumeImage) && !isRender(body.costumeImage))

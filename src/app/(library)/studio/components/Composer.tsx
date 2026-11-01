@@ -151,10 +151,10 @@ export function Composer(props: ComposerProps) {
                     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
 
                     event.preventDefault();
-                    if (!running && poses.length) props.onSend();
+                    if (!running && photos.length && selection.extraPrompt.trim()) props.onSend();
                 }}
                 rows={1}
-                placeholder={poses.length ? 'Describe the scene, mood or anything to change' : 'Add a pose with +, then describe the scene'}
+                placeholder={poses.length ? 'Describe the scene, mood or anything to change' : 'Describe the image you want to make'}
                 aria-label="Scene and direction"
                 className="field-sizing-content max-h-48 min-h-11 w-full resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
             />
@@ -250,7 +250,7 @@ export function Composer(props: ComposerProps) {
                         size="icon"
                         className="shrink-0 rounded-full"
                         aria-label={`Generate ${props.imageCount} ${props.imageCount === 1 ? 'image' : 'images'}`}
-                        disabled={!poses.length}
+                        disabled={!photos.length || !selection.extraPrompt.trim()}
                         onClick={props.onSend}
                     >
                         <ArrowUpIcon />

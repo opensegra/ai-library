@@ -183,7 +183,7 @@ export function useStudioScreen() {
         () => settings.services.filter((service) => settings.selected.includes(service.id) && isServiceReady(service)),
         [settings]
     );
-    const groups = selection.mode === 'sheet' && poses.length > 1 ? [poses] : poses.map((entry) => [entry]);
+    const groups = selection.mode === 'sheet' && poses.length > 1 ? [poses] : poses.length ? poses.map((entry) => [entry]) : [[]];
     const imageCount = groups.length * Math.max(1, services.length);
 
     const buildJob = (group: ChosenPose[], message: string, limit = Infinity) => {
@@ -216,7 +216,7 @@ export function useStudioScreen() {
         ].filter((entry): entry is string => !!entry);
 
         return {
-            label: kept.map((entry) => entry.pose.code).join(' + '),
+            label: kept.map((entry) => entry.pose.code).join(' + ') || 'Studio image',
             modelPhotos: photos,
             scenePhoto: withScene ? selection.scenePhoto : null,
             costumeImage: withCostume && costume ? costume.mid : null,
@@ -325,8 +325,8 @@ export function useStudioScreen() {
     };
 
     const send = async () => {
-        if (!poses.length) {
-            toast.info('Add at least one pose first.');
+        if (!selection.extraPrompt.trim() || !selection.modelPhotos.length) {
+            toast.info('Add a model photo and describe the image you want to make.');
             return;
         }
 
@@ -434,11 +434,6 @@ export function useStudioScreen() {
     };
 
     const copyDraft = () => {
-        if (!poses.length) {
-            toast.info('Add at least one pose first.');
-            return;
-        }
-
         void copyPrompt(
             buildJobs(selection.extraPrompt)
                 .map((job) => withNegative(job.prompt))
