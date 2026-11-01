@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     title: { default: 'AI Library', template: '%s · AI Library' },
     description: 'Pose and costume references with a rigged 3D mannequin for every pose.',
     applicationName: 'AI Library',
+    verification: {
+        google: 'ku_LwOuzhXNeqJOHBY0Gole3cjLpiPlxZkuykJOr_6c'
+    },
     openGraph: {
         type: 'website',
         siteName: 'AI Library',
