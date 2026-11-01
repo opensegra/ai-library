@@ -1,5 +1,7 @@
 # AI Library
 
+<img src="public/logo.svg" width="72" alt="AI Library logo">
+
 A browsable library of pose and costume references, with a rigged 3D mannequin for every pose.
 
 - **288 poses**, each drawn from five angles: front, above, below, side and diagonal.
@@ -8,6 +10,10 @@ A browsable library of pose and costume references, with a rigged 3D mannequin f
   download as `.glb` or `.bvh`.
 
 Built with Next.js 16, React 19, Tailwind CSS 4, shadcn/ui and three.js.
+
+The app uses the matching mark as its browser icon and generates a 1200 × 630 Open Graph image
+for link previews. The logo artwork is in [`public/logo.svg`](public/logo.svg), and the social card
+is served at `/opengraph-image` and included in the Open Graph and Twitter metadata.
 
 ![The pose library with a pose open in the detail panel](docs/screenshots/poses.jpg)
 
@@ -29,16 +35,6 @@ One costume from each season:
 | :---: | :---: | :---: | :---: |
 | <img src="public/media/costumes/thumbs/SPR-0001.webp" width="150" alt="Spring costume C-SP-0001"> | <img src="public/media/costumes/thumbs/SUM-0162.webp" width="150" alt="Summer costume C-SU-0001"> | <img src="public/media/costumes/thumbs/AUT-0001.webp" width="150" alt="Autumn costume C-AU-0001"> | <img src="public/media/costumes/thumbs/WIN-0004.webp" width="150" alt="Winter costume C-WI-0004"> |
 
-## Getting started
-
-```bash
-pnpm install
-pnpm dev
-```
-
-Open http://localhost:3010. Everything the app needs ships in the repository, so there is nothing
-to download or configure first.
-
 ## The images
 
 All images are in `public/media` and are served as static files:
@@ -52,12 +48,8 @@ All images are in `public/media` and are served as static files:
 
 Every image can also be downloaded from its detail panel in the app.
 
-To serve the images from your own storage or CDN instead, upload the `public/media` folder as it is
-and set the base URL before building:
-
-```bash
-NEXT_PUBLIC_MEDIA_BASE_URL=https://your-bucket.example.com pnpm build
-```
+To serve images from your own storage or CDN, upload the `public/media` folder and set
+`NEXT_PUBLIC_MEDIA_BASE_URL` to its base URL.
 
 ## Getting the rigged model
 
@@ -95,9 +87,21 @@ It returns the bone rotations, the camera angle of each drawing and the measured
 **Pose from your image** puts the pose from any photo or drawing onto the mannequin. The image is
 read in the browser and never uploaded.
 
+See it in action: turn a photo into a pose and inspect the fitted mannequin, or compare the source
+image with the drawing and explore the mannequin views.
+
+<video src="public/pose-from-image.mp4" controls width="720" aria-label="Turn a photo into a pose and inspect the fitted mannequin"></video>
+
+<video src="public/pose-from-image-2.mp4" controls width="720" aria-label="Compare the source image with the drawing and explore the mannequin views"></video>
+
 ## Studio
 
 The studio puts your own model into any pose and costume with an image-generation model.
+
+Watch the studio workflow: add a model photo, pose and costume, describe the scene, then generate an
+image.
+
+<video src="public/studio.mp4" controls width="720" aria-label="Add a model photo, pose and costume in the studio and generate an image"></video>
 
 ![The studio: a pose and a costume sent as references, and the generated photograph](docs/screenshots/studio.jpg)
 
@@ -137,8 +141,8 @@ anything is still being made.
 automatically. Saving uses Google's `drive.file` permission, so the site can only see the files it
 creates, in an AI Library folder; turn it on or off in Image settings, or save single images from the
 gallery and viewer. To enable it on your own deployment, create an OAuth client ID (type *Web
-application*) in Google Cloud, add the site's origins (for example `http://localhost:3010`) as
-authorised JavaScript origins, enable the Google Drive API, and set `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+application*) in Google Cloud, add the site's origins as authorized JavaScript origins, enable the
+Google Drive API, and set `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 before building. Without it, Drive saving stays hidden.
 
 Without a key, **Copy prompt** gives you the full prompt to use in any other image tool, with the
