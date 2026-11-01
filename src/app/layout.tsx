@@ -9,6 +9,7 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://ailibrary.opensegra.com'),
     title: { default: 'AI Library', template: '%s · AI Library' },
     description: 'Pose and costume references with a rigged 3D mannequin for every pose.',
     applicationName: 'AI Library',

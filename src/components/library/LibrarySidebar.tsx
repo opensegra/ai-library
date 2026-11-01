@@ -87,10 +87,10 @@ export function LibrarySidebar({ onNavigate }: LibrarySidebarProps) {
 
     return (
         <nav aria-label="Library" className="flex h-full flex-col">
-            <div className="flex items-center gap-2 px-4 py-4 text-sm font-semibold">
-                <PersonStandingIcon className="size-5" />
-                AI Library
-            </div>
+            <Link href="/" className="flex items-center gap-2 px-4 py-4 text-sm font-semibold" aria-label="AI Library home">
+                <img src="/logo.svg" alt="" className="size-6" />
+                <span>AI Library</span>
+            </Link>
             <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
                 {sections.map((section) => (
                     <div key={section.title} className="mb-4">
@@ -135,6 +135,10 @@ export function LibrarySidebar({ onNavigate }: LibrarySidebarProps) {
                 <Button variant="ghost" size="icon-sm" aria-label="Switch theme" onClick={toggleTheme}>
                     {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
                 </Button>
+            </div>
+            <div className="flex justify-center gap-4 border-t px-3 py-2 text-xs text-muted-foreground">
+                <Link href="/terms" className="hover:text-foreground">Terms</Link>
+                <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
             </div>
             <NewBoardDialog open={boardDialogOpen} onOpenChange={setBoardDialogOpen} onCreate={createBoard} />
         </nav>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useLibrary } from '@/hooks/client/useLibrary';
-import type { ImageAdjustments } from '@/lib/library/libraryState';
+import { EMPTY_LIBRARY, type ImageAdjustments } from '@/lib/library/libraryState';
 import { useEffect, useState } from 'react';
 
 export function useBrowserToolbar(query: string, onQuery: (value: string) => void) {
@@ -29,6 +29,12 @@ export function useBrowserToolbar(query: string, onQuery: (value: string) => voi
         cellSize: state.cellSize,
         setCellSize: (cellSize: number) => update((current) => ({ ...current, cellSize })),
         setAdjustment: (change: Partial<ImageAdjustments>) =>
-            update((current) => ({ ...current, adjustments: { ...current.adjustments, ...change } }))
+            update((current) => ({ ...current, adjustments: { ...current.adjustments, ...change } })),
+        resetView: () =>
+            update((current) => ({
+                ...current,
+                cellSize: EMPTY_LIBRARY.cellSize,
+                adjustments: { ...EMPTY_LIBRARY.adjustments }
+            }))
     };
 }

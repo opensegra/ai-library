@@ -92,17 +92,21 @@ image with the drawing and explore the mannequin views.
 
 **Turn a photo into a pose**
 
-<video src="public/demos/pose-from-image-00.mp4" controls width="720" aria-label="Pose from image demo, part 1 of 2"></video>
+<video controls width="720" aria-label="Pose from image demo, part 1 of 2"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-00.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-00.mp4">Open part 1</a>.</video>
 
-<video src="public/demos/pose-from-image-01.mp4" controls width="720" aria-label="Pose from image demo, part 2 of 2"></video>
+<video controls width="720" aria-label="Pose from image demo, part 2 of 2"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-01.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-01.mp4">Open part 2</a>.</video>
+
+Video files: [Part 1](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-00.mp4) · [Part 2](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-01.mp4)
 
 **Compare the source image with the drawing and explore the mannequin**
 
-<video src="public/demos/pose-from-image-mannequin-00.mp4" controls width="720" aria-label="Pose mannequin demo, part 1 of 3"></video>
+<video controls width="720" aria-label="Pose mannequin demo, part 1 of 3"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-00.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-00.mp4">Open part 1</a>.</video>
 
-<video src="public/demos/pose-from-image-mannequin-01.mp4" controls width="720" aria-label="Pose mannequin demo, part 2 of 3"></video>
+<video controls width="720" aria-label="Pose mannequin demo, part 2 of 3"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-01.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-01.mp4">Open part 2</a>.</video>
 
-<video src="public/demos/pose-from-image-mannequin-02.mp4" controls width="720" aria-label="Pose mannequin demo, part 3 of 3"></video>
+<video controls width="720" aria-label="Pose mannequin demo, part 3 of 3"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-02.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-02.mp4">Open part 3</a>.</video>
+
+Video files: [Part 1](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-00.mp4) · [Part 2](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-01.mp4) · [Part 3](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/pose-from-image-mannequin-02.mp4)
 
 ## Studio
 
@@ -111,17 +115,19 @@ The studio puts your own model into any pose and costume with an image-generatio
 Watch the studio workflow: add a model photo, pose and costume, describe the scene, then generate an
 image.
 
-<video src="public/demos/studio-00.mp4" controls width="720" aria-label="Studio demo, part 1 of 6: add a model photo, pose and costume"></video>
+<video controls width="720" aria-label="Studio demo, part 1 of 6: add a model photo, pose and costume"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-00.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-00.mp4">Open part 1</a>.</video>
 
-<video src="public/demos/studio-01.mp4" controls width="720" aria-label="Studio demo, part 2 of 6"></video>
+<video controls width="720" aria-label="Studio demo, part 2 of 6"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-01.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-01.mp4">Open part 2</a>.</video>
 
-<video src="public/demos/studio-02.mp4" controls width="720" aria-label="Studio demo, part 3 of 6"></video>
+<video controls width="720" aria-label="Studio demo, part 3 of 6"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-02.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-02.mp4">Open part 3</a>.</video>
 
-<video src="public/demos/studio-03.mp4" controls width="720" aria-label="Studio demo, part 4 of 6"></video>
+<video controls width="720" aria-label="Studio demo, part 4 of 6"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-03.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-03.mp4">Open part 4</a>.</video>
 
-<video src="public/demos/studio-04.mp4" controls width="720" aria-label="Studio demo, part 5 of 6"></video>
+<video controls width="720" aria-label="Studio demo, part 5 of 6"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-04.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-04.mp4">Open part 5</a>.</video>
 
-<video src="public/demos/studio-05.mp4" controls width="720" aria-label="Studio demo, part 6 of 6: view the generated image"></video>
+<video controls width="720" aria-label="Studio demo, part 6 of 6: view the generated image"><source src="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-05.mp4" type="video/mp4">Your browser cannot play this video. <a href="https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-05.mp4">Open part 6</a>.</video>
+
+Video files: [Part 1](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-00.mp4) · [Part 2](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-01.mp4) · [Part 3](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-02.mp4) · [Part 4](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-03.mp4) · [Part 5](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-04.mp4) · [Part 6](https://raw.githubusercontent.com/opensegra/ai-library/main/public/demos/studio-05.mp4)
 
 ![The studio: a pose and a costume sent as references, and the generated photograph](docs/screenshots/studio.jpg)
 

@@ -1,0 +1,37 @@
+WEBVTT
+
+00:00.000 --> 00:03.000
+Open AI Library Studio to start creating an image.
+
+00:03.000 --> 00:06.500
+The media library contains reusable images and saved assets.
+
+00:06.500 --> 00:10.000
+Browse the available pose collection and choose a pose for the model.
+
+00:10.000 --> 00:13.500
+Next, open the costume picker and browse the available outfits.
+
+00:13.500 --> 00:17.000
+Select a pose and a costume to configure the image.
+
+00:17.000 --> 00:21.000
+Add a model image, then provide any additional scene instructions.
+
+00:21.000 --> 00:25.000
+The prompt describes the intended result: make the pose of the image with the dress.
+
+00:25.000 --> 00:29.000
+The selected pose and costume are shown in the generation setup.
+
+00:29.000 --> 00:33.000
+Submit the request and wait while the image is generated.
+
+00:33.000 --> 00:37.000
+The generation completes, producing one image with the selected pose and costume.
+
+00:37.000 --> 00:41.000
+Review the generated result in the Studio.
+
+00:41.000 --> 00:43.600
+Open the generated images panel to view the saved output.

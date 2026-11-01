@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:03,000
+Open Pose from your image and choose a full-body photo or drawing.
+
+2
+00:00:03,000 --> 00:00:06,000
+Select an image to fit its pose to the 3D mannequin.
+
+3
+00:00:06,000 --> 00:00:09,000
+The source photo appears beside the mannequin fitted to its pose.
+
+4
+00:00:09,000 --> 00:00:11,500
+Orbit the mannequin to inspect the pose from another angle.
+
+5
+00:00:11,500 --> 00:00:14,400
+Switch mannequin views, then download the rig or its depth map.

@@ -6,6 +6,8 @@ import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
@@ -47,7 +49,7 @@ export function BrowserToolbar({
     onAngle,
     onCompare
 }: BrowserToolbarProps) {
-    const { draft, setDraft, adjustments, cellSize, setCellSize, setAdjustment } = useBrowserToolbar(query, onQuery);
+    const { draft, setDraft, adjustments, cellSize, setCellSize, setAdjustment, resetView } = useBrowserToolbar(query, onQuery);
 
     return (
         <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
@@ -97,17 +99,19 @@ export function BrowserToolbar({
                     View
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64">
-                    <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
-                    <div className="px-2 pb-2">
-                        <Slider
-                            value={[cellSize]}
-                            min={110}
-                            max={300}
-                            step={4}
-                            onValueChange={(value) => setCellSize(Array.isArray(value) ? value[0] : value)}
-                            aria-label="Thumbnail size"
-                        />
-                    </div>
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
+                        <div className="px-2 pb-2">
+                            <Slider
+                                value={[cellSize]}
+                                min={110}
+                                max={300}
+                                step={4}
+                                onValueChange={(value) => setCellSize(Array.isArray(value) ? value[0] : value)}
+                                aria-label="Thumbnail size"
+                            />
+                        </div>
+                    </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuCheckboxItem checked={adjustments.flip} onCheckedChange={(checked) => setAdjustment({ flip: checked })}>
                         Mirror images
@@ -119,28 +123,34 @@ export function BrowserToolbar({
                         Invert
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Contrast</DropdownMenuLabel>
-                    <div className="px-2 pb-2">
-                        <Slider
-                            value={[adjustments.contrast]}
-                            min={0.6}
-                            max={1.8}
-                            step={0.05}
-                            onValueChange={(value) => setAdjustment({ contrast: Array.isArray(value) ? value[0] : value })}
-                            aria-label="Contrast"
-                        />
-                    </div>
-                    <DropdownMenuLabel>Tint</DropdownMenuLabel>
-                    <div className="px-2 pb-2">
-                        <Slider
-                            value={[adjustments.tint]}
-                            min={0}
-                            max={360}
-                            step={5}
-                            onValueChange={(value) => setAdjustment({ tint: Array.isArray(value) ? value[0] : value })}
-                            aria-label="Tint"
-                        />
-                    </div>
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Contrast</DropdownMenuLabel>
+                        <div className="px-2 pb-2">
+                            <Slider
+                                value={[adjustments.contrast]}
+                                min={0.6}
+                                max={1.8}
+                                step={0.05}
+                                onValueChange={(value) => setAdjustment({ contrast: Array.isArray(value) ? value[0] : value })}
+                                aria-label="Contrast"
+                            />
+                        </div>
+                    </DropdownMenuGroup>
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Tint</DropdownMenuLabel>
+                        <div className="px-2 pb-2">
+                            <Slider
+                                value={[adjustments.tint]}
+                                min={0}
+                                max={360}
+                                step={5}
+                                onValueChange={(value) => setAdjustment({ tint: Array.isArray(value) ? value[0] : value })}
+                                aria-label="Tint"
+                            />
+                        </div>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={resetView}>Reset view</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             <Button variant={compareCount ? 'default' : 'outline'} size="sm" onClick={onCompare}>
