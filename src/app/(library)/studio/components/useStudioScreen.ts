@@ -34,7 +34,7 @@ import { toast } from 'sonner';
 
 export type StudioResult = SavedResult;
 
-export type RequestBody = Omit<GenerateRequest, 'protocol'> & { protocol?: ImageProtocol };
+export type RequestBody = Omit<GenerateRequest, 'protocol'> & { protocol?: ImageProtocol; userPrompt: string };
 
 export interface ChosenPose {
     pose: Pose;
@@ -325,8 +325,8 @@ export function useStudioScreen() {
     };
 
     const send = async () => {
-        if (!selection.extraPrompt.trim() || !selection.modelPhotos.length) {
-            toast.info('Add a model photo and describe the image you want to make.');
+        if (!selection.extraPrompt.trim() || (!selection.modelPhotos.length && !selection.scenePhoto && !poses.length && !costume)) {
+            toast.info('Add a reference image and describe the image you want to make.');
             return;
         }
 
@@ -361,6 +361,7 @@ export function useStudioScreen() {
                         model: service?.model ?? '',
                         accountId: service?.accountId,
                         prompt: negativeField ? job.prompt : withNegative(job.prompt),
+                        userPrompt: message,
                         negativePrompt: negativeField ? selection.negativePrompt.trim() || undefined : undefined,
                         modelPhotos: await Promise.all(job.modelPhotos.map(fit)),
                         scenePhoto: job.scenePhoto ? await fit(job.scenePhoto) : null,

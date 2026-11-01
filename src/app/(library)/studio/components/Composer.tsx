@@ -62,6 +62,7 @@ export function Composer(props: ComposerProps) {
     const { selection, poses, costume, running, onChange } = props;
     const photos = selection.modelPhotos;
     const hasAttachments = photos.length > 0 || !!selection.scenePhoto || poses.length > 0 || !!costume;
+    const canGenerate = hasAttachments && !!selection.extraPrompt.trim();
 
     return (
         <div className="flex flex-col gap-2 rounded-3xl border bg-background p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
@@ -151,7 +152,7 @@ export function Composer(props: ComposerProps) {
                     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
 
                     event.preventDefault();
-                    if (!running && photos.length && selection.extraPrompt.trim()) props.onSend();
+                    if (!running && canGenerate) props.onSend();
                 }}
                 rows={1}
                 placeholder={poses.length ? 'Describe the scene, mood or anything to change' : 'Describe the image you want to make'}
@@ -250,7 +251,7 @@ export function Composer(props: ComposerProps) {
                         size="icon"
                         className="shrink-0 rounded-full"
                         aria-label={`Generate ${props.imageCount} ${props.imageCount === 1 ? 'image' : 'images'}`}
-                        disabled={!photos.length || !selection.extraPrompt.trim()}
+                        disabled={!canGenerate}
                         onClick={props.onSend}
                     >
                         <ArrowUpIcon />

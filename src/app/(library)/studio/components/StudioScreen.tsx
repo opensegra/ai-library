@@ -50,7 +50,7 @@ export function StudioScreen() {
         : 'No image service set up in this browser. Sending uses the server key if one is set; Copy prompt works with any image tool.';
 
     const starters = [
-        { kind: 'photos', label: 'Add model photos', detail: 'Up to three of the person to draw', icon: ImagePlusIcon },
+        { kind: 'photos', label: 'Add model photos', detail: 'Up to three photos of the person to draw', icon: ImagePlusIcon },
         { kind: 'scene', label: 'Add an environment', detail: 'A photo for the place, light and camera', icon: MountainIcon },
         { kind: 'poses', label: 'Choose poses', detail: 'Up to six, each from five angles', icon: PersonStandingIcon },
         { kind: 'costumes', label: 'Pick a costume', detail: 'Optional; otherwise their own clothes', icon: ShirtIcon }

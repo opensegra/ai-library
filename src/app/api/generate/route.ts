@@ -15,6 +15,7 @@ interface GenerateBody {
     baseURL?: string;
     model?: string;
     prompt?: string;
+    userPrompt?: string;
     negativePrompt?: string;
     accountId?: string;
     modelPhotos?: string[];
@@ -105,9 +106,9 @@ export async function POST(request: Request) {
     if (protocol === 'cloudflare' && !/^@(cf|hf)\/[\w.-]+(\/[\w.-]+)*$/.test(model))
         return refuse('Cloudflare model names look like @cf/black-forest-labs/flux-2-klein-4b.');
     if (!RATIOS.has(aspectRatio)) return refuse('That aspect ratio is not supported.');
-    if (!body.prompt?.trim() || body.prompt.length > 12000) return refuse('The prompt is empty or too long.');
-    if (photos.length < 1 || photos.length > 3 || poses.length > 12)
-        return refuse('Add one to three model photos and use up to six poses.');
+    if (!body.userPrompt?.trim() || !body.prompt?.trim() || body.prompt.length > 12000)
+        return refuse('Describe the image you want to make.');
+    if (photos.length > 3 || poses.length > 12) return refuse('Use up to three model photos and up to six poses.');
     if (
         !poses.every((path) => isMediaPath(path) || isRender(path)) ||
         (body.costumeImage != null && !isMediaPath(body.costumeImage) && !isRender(body.costumeImage))
@@ -128,6 +129,8 @@ export async function POST(request: Request) {
 
     if (body.scenePhoto && (!scene || (scene[2].length * 3) / 4 > MAX_PHOTO_BYTES))
         return refuse('The environment photo must be a PNG, JPEG or WebP image under 3 MB.');
+    if (!photos.length && !scene && !body.costumeImage && !poses.length)
+        return refuse('Add at least one reference image: a model photo, environment, pose or costume.');
     if (scene) photoImages.push({ mediaType: scene[1], base64: scene[2] });
 
     try {
